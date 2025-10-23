@@ -16,8 +16,9 @@ const RegisterScreen = ({ onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -28,8 +29,29 @@ const RegisterScreen = ({ onBack }) => {
       return;
     }
 
-    Alert.alert('Success', 'Registration successful! Please login.');
-    onBack();
+    setLoading(true);
+    try {
+      await axios.post('http://localhost:5000/api/auth/register', {
+        name,
+        email,
+        password,
+        role: 'resident' // Always register as resident for security
+      });
+
+      Alert.alert(
+        'Success',
+        'Registration successful! Please login.',
+        [{ text: 'OK', onPress: onBack }]
+      );
+    } catch (error) {
+      console.error('Registration error:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Registration failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
