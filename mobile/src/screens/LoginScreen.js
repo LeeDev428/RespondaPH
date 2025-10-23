@@ -1,161 +1,205 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
-  VStack,
-  HStack,
+  View,
   Text,
-  Input,
-  Button,
-  Center,
-  FormControl,
-  Alert,
-  Collapse,
-  IconButton,
-  CloseIcon
-} from 'native-base';
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Alert
+} from 'react-native';
 import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ onBack, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
-    setError('');
-    
     if (!email || !password) {
-      setError('Please fill in all fields');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
-
     try {
-      const response = await axios.post('http://10.0.2.2:5000/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         email,
-        password,
+        password
       });
 
-      await login(response.data.token, response.data.user);
-      
-      if (response.data.user.role === 'resident') {
-        navigation.replace('ResidentDashboard');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      // Store the token
+      await AsyncStorage.setItem('token', response.data.token);
+      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+
+      Alert.alert('Success', 'Login successful!');
+      onLoginSuccess();
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Login failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box flex={1} bg="emerald.50" safeArea>
-      <Center flex={1} px={4}>
-        <VStack space={6} width="100%" maxW="400px">
-          {/* Logo */}
-          <Center>
-            <Box
-              bg="emerald.600"
-              width={80}
-              height={80}
-              rounded="full"
-              alignItems="center"
-              justifyContent="center"
-              shadow={3}
-              mb={4}
-            >
-              <Text fontSize="4xl" color="white" fontWeight="bold">
-                T
-              </Text>
-            </Box>
-            <Text fontSize="2xl" fontWeight="bold" color="gray.800">
-              Login
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Back Button */}
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>T</Text>
+          </View>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Login to your Tugon account</Text>
+
+        {/* Form */}
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? 'Logging in...' : 'Login'}
             </Text>
-            <Text fontSize="md" color="gray.600">
-              Access your Tugon account
-            </Text>
-          </Center>
-
-          {/* Error Alert */}
-          <Collapse isOpen={!!error}>
-            <Alert status="error" variant="left-accent">
-              <HStack space={2} flexShrink={1} alignItems="center">
-                <Alert.Icon />
-                <Text flex={1} color="error.600" fontSize="sm">
-                  {error}
-                </Text>
-                <IconButton
-                  variant="unstyled"
-                  icon={<CloseIcon size="3" color="error.600" />}
-                  onPress={() => setError('')}
-                />
-              </HStack>
-            </Alert>
-          </Collapse>
-
-          {/* Form */}
-          <VStack space={4}>
-            <FormControl>
-              <FormControl.Label>Email</FormControl.Label>
-              <Input
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                size="lg"
-                bg="white"
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormControl.Label>Password</FormControl.Label>
-              <Input
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                type="password"
-                size="lg"
-                bg="white"
-              />
-            </FormControl>
-
-            <Button
-              bg="emerald.600"
-              size="lg"
-              rounded="lg"
-              isLoading={loading}
-              isLoadingText="Logging in..."
-              _pressed={{ bg: 'emerald.700' }}
-              onPress={handleLogin}
-              mt={2}
-            >
-              <Text fontSize="lg" fontWeight="bold" color="white">
-                Login
-              </Text>
-            </Button>
-          </VStack>
-
-          {/* Register Link */}
-          <Center>
-            <HStack space={2}>
-              <Text color="gray.600">Don't have an account?</Text>
-              <Text
-                color="emerald.600"
-                fontWeight="bold"
-                onPress={() => navigation.navigate('Register')}
-              >
-                Register here
-              </Text>
-            </HStack>
-          </Center>
-        </VStack>
-      </Center>
-    </Box>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0fdf4',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  backButton: {
+    marginBottom: 20,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#10b981',
+    fontWeight: '600',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  logoText: {
+    fontSize: 50,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  loginButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});
 
 export default LoginScreen;
