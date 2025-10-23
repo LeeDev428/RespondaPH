@@ -7,10 +7,13 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '../config/api';
 
 const LoginScreen = ({ onBack, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
