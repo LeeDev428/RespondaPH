@@ -10,8 +10,7 @@ const Register = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: 'resident'
+    confirmPassword: ''
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,7 +42,7 @@ const Register = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: 'resident' // Always register as resident for security
       })
       
       login(response.data.token, response.data.user)
@@ -146,22 +145,6 @@ const Register = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lgu-green-500 focus:border-transparent"
                 placeholder="••••••••"
               />
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                Register As
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lgu-green-500 focus:border-transparent"
-              >
-                <option value="resident">Resident</option>
-                <option value="admin">Admin (Official ID Required)</option>
-              </select>
             </div>
 
             <button
