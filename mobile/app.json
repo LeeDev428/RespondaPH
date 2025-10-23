@@ -1,4 +1,25 @@
 {
-  "name": "tugon-mobile",
-  "displayName": "Tugon"
+  "expo": {
+    "name": "Tugon",
+    "slug": "tugon-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
+    "splash": {
+      "backgroundColor": "#10b981",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tugon.app"
+    },
+    "android": {
+      "package": "com.tugon.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#10b981"
+      }
+    }
+  }
 }
+
