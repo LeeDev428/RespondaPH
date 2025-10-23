@@ -119,8 +119,14 @@ const RegisterScreen = ({ onBack }) => {
             />
           </View>
 
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-            <Text style={styles.registerButtonText}>Create Account</Text>
+          <TouchableOpacity 
+            style={[styles.registerButton, loading && styles.registerButtonDisabled]} 
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            <Text style={styles.registerButtonText}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -212,6 +218,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 4,
+  },
+  registerButtonDisabled: {
+    backgroundColor: '#9ca3af',
   },
   registerButtonText: {
     color: '#ffffff',
