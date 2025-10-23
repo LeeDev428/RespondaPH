@@ -1,143 +1,142 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
-  Box,
-  VStack,
-  HStack,
+  View,
   Text,
-  Button,
-  ScrollView,
-  Pressable,
-  Center
-} from 'native-base';
-import { AuthContext } from '../context/AuthContext';
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView
+} from 'react-native';
 
-const ResidentDashboardScreen = ({ navigation }) => {
-  const { user, logout } = useContext(AuthContext);
-
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('Welcome');
-  };
-
+const ResidentDashboardScreen = ({ onLogout }) => {
   return (
-    <Box flex={1} bg="emerald.50" safeArea>
-      <ScrollView>
-        <VStack space={6} p={4}>
-          {/* Welcome Header */}
-          <Box bg="emerald.600" p={6} rounded="lg" shadow={3}>
-            <Text fontSize="2xl" fontWeight="bold" color="white">
-              Welcome, {user?.name}!
-            </Text>
-            <Text fontSize="md" color="emerald.100" mt={1}>
-              Resident Dashboard
-            </Text>
-          </Box>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Resident Dashboard</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Action Cards */}
-          <VStack space={4}>
-            <Pressable onPress={() => {}}>
-              <Box bg="white" p={6} rounded="lg" shadow={2}>
-                <HStack space={4} alignItems="center">
-                  <Center bg="red.100" width={60} height={60} rounded="lg">
-                    <Text fontSize="3xl">🚨</Text>
-                  </Center>
-                  <VStack flex={1}>
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      Report Emergency
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      Submit incident report
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            </Pressable>
+        {/* Cards */}
+        <View style={styles.cardsContainer}>
+          <TouchableOpacity style={[styles.card, styles.cardRed]}>
+            <Text style={styles.cardIcon}>🆘</Text>
+            <Text style={styles.cardTitle}>Request Help</Text>
+            <Text style={styles.cardSubtitle}>Report an emergency</Text>
+          </TouchableOpacity>
 
-            <Pressable onPress={() => {}}>
-              <Box bg="white" p={6} rounded="lg" shadow={2}>
-                <HStack space={4} alignItems="center">
-                  <Center bg="blue.100" width={60} height={60} rounded="lg">
-                    <Text fontSize="3xl">📋</Text>
-                  </Center>
-                  <VStack flex={1}>
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      My Reports
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      View your submissions
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            </Pressable>
+          <TouchableOpacity style={[styles.card, styles.cardBlue]}>
+            <Text style={styles.cardIcon}>📋</Text>
+            <Text style={styles.cardTitle}>My Reports</Text>
+            <Text style={styles.cardSubtitle}>View your submissions</Text>
+          </TouchableOpacity>
 
-            <Pressable onPress={() => {}}>
-              <Box bg="white" p={6} rounded="lg" shadow={2}>
-                <HStack space={4} alignItems="center">
-                  <Center bg="amber.100" width={60} height={60} rounded="lg">
-                    <Text fontSize="3xl">📢</Text>
-                  </Center>
-                  <VStack flex={1}>
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      View Alerts
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      Emergency announcements
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            </Pressable>
-          </VStack>
+          <TouchableOpacity style={[styles.card, styles.cardYellow]}>
+            <Text style={styles.cardIcon}>🔔</Text>
+            <Text style={styles.cardTitle}>View Alerts</Text>
+            <Text style={styles.cardSubtitle}>Check announcements</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Recent Activity */}
-          <Box bg="white" p={6} rounded="lg" shadow={2}>
-            <Text fontSize="lg" fontWeight="bold" color="gray.800" mb={4}>
-              Recent Activity
-            </Text>
-            <Center py={8}>
-              <Text fontSize="4xl" mb={2}>📭</Text>
-              <Text color="gray.500" textAlign="center">
-                No activity yet
-              </Text>
-              <Text color="gray.400" textAlign="center" fontSize="sm">
-                Your reports will appear here
-              </Text>
-            </Center>
-          </Box>
-
-          {/* Emergency Contact */}
-          <Box bg="red.50" p={6} rounded="lg" borderWidth={2} borderColor="red.200">
-            <Text fontSize="lg" fontWeight="bold" color="red.800" mb={3}>
-              Emergency Hotlines
-            </Text>
-            <VStack space={2}>
-              <HStack justifyContent="space-between">
-                <Text color="gray.700" fontWeight="medium">National Emergency:</Text>
-                <Text fontSize="xl" fontWeight="bold" color="red.600">911</Text>
-              </HStack>
-              <HStack justifyContent="space-between">
-                <Text color="gray.700" fontWeight="medium">Barangay Office:</Text>
-                <Text fontSize="xl" fontWeight="bold" color="red.600">(123) 456-7890</Text>
-              </HStack>
-            </VStack>
-          </Box>
-
-          {/* Logout Button */}
-          <Button
-            variant="outline"
-            borderColor="red.500"
-            _text={{ color: 'red.500', fontWeight: 'bold' }}
-            size="lg"
-            rounded="lg"
-            onPress={handleLogout}
-          >
-            Logout
-          </Button>
-        </VStack>
+        {/* Info */}
+        <View style={styles.infoBox}>
+          <Text style={styles.infoTitle}>Welcome to Tugon!</Text>
+          <Text style={styles.infoText}>
+            You can now report emergencies, view your submissions, and receive real-time alerts from Barangay San Isidro Labrador I.
+          </Text>
+        </View>
       </ScrollView>
-    </Box>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0fdf4',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  logoutButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+  },
+  logoutButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  cardsContainer: {
+    marginBottom: 30,
+  },
+  card: {
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardRed: {
+    backgroundColor: '#fee2e2',
+  },
+  cardBlue: {
+    backgroundColor: '#dbeafe',
+  },
+  cardYellow: {
+    backgroundColor: '#fef3c7',
+  },
+  cardIcon: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  infoBox: {
+    backgroundColor: '#d1fae5',
+    padding: 20,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+  },
+});
 
 export default ResidentDashboardScreen;
