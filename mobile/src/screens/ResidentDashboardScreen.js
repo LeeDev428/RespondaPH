@@ -43,7 +43,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Welcome to Tugon!</Text>
+          <Text style={styles.infoTitle}>Welcome to DREAM!</Text>
           <Text style={styles.infoText}>
             You can now report emergencies, view your submissions, and receive real-time alerts from Barangay San Isidro Labrador I.
           </Text>
