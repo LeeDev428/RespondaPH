@@ -47,11 +47,11 @@ const Login = () => {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 bg-lgu-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">T</span>
+                <span className="text-white font-bold text-2xl">D</span>
               </div>
             </div>
             <h2 className="text-3xl font-bold text-gray-900">Login</h2>
-            <p className="text-gray-600 mt-2">Access your Tugon account</p>
+            <p className="text-gray-600 mt-2">Access your DREAM account</p>
           </div>
 
           {error && (
