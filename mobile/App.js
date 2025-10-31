@@ -31,14 +31,14 @@ export default function App() {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <View style={styles.logo}>
-              <Text style={styles.logoText}>T</Text>
+              <Text style={styles.logoText}>D</Text>
             </View>
           </View>
 
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Tugon</Text>
-            <Text style={styles.subtitle}>Barangay Disaster Response System</Text>
+            <Text style={styles.title}>DREAM</Text>
+            <Text style={styles.subtitle}>Disaster Response and Emergency Action Management</Text>
             <Text style={styles.location}>San Isidro Labrador I</Text>
           </View>
 
