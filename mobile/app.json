@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Tugon",
-    "slug": "tugon-mobile",
+    "name": "DREAM",
+    "slug": "dream-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -12,10 +12,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tugon.app"
+      "bundleIdentifier": "com.dream.app"
     },
     "android": {
-      "package": "com.tugon.app",
+      "package": "com.dream.app",
       "adaptiveIcon": {
         "backgroundColor": "#10b981"
       }
