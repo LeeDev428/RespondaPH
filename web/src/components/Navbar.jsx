@@ -7,9 +7,9 @@ const Navbar = ({ user, onLogout }) => {
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <span className="text-lgu-green-700 font-bold text-xl">T</span>
+              <span className="text-lgu-green-700 font-bold text-xl">D</span>
             </div>
-            <span className="font-bold text-xl">Tugon</span>
+            <span className="font-bold text-xl">DREAM</span>
           </Link>
           
           <div className="flex items-center space-x-4">
