@@ -76,13 +76,13 @@ const RegisterScreen = ({ onBack }) => {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>T</Text>
+            <Text style={styles.logoText}>D</Text>
           </View>
         </View>
 
         {/* Title */}
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Tugon today</Text>
+        <Text style={styles.subtitle}>Join DREAM today</Text>
 
         {/* Form */}
         <View style={styles.form}>
