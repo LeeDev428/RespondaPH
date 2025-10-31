@@ -17,17 +17,17 @@ const WelcomeScreen = ({ navigation }) => {
             shadow={5}
           >
             <Text fontSize="6xl" color="white" fontWeight="bold">
-              T
+              D
             </Text>
           </Box>
 
           {/* Title */}
           <VStack space={2} alignItems="center">
             <Text fontSize="4xl" fontWeight="bold" color="gray.800">
-              Tugon
+              DREAM
             </Text>
             <Text fontSize="xl" color="emerald.700" textAlign="center">
-              Barangay Disaster Response System
+              Disaster Response and Emergency Action Management
             </Text>
             <Text fontSize="md" color="gray.600" textAlign="center">
               San Isidro Labrador I
