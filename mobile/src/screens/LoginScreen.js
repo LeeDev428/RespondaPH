@@ -69,13 +69,13 @@ const LoginScreen = ({ onBack, onLoginSuccess }) => {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>T</Text>
+            <Text style={styles.logoText}>D</Text>
           </View>
         </View>
 
         {/* Title */}
         <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Login to your Tugon account</Text>
+        <Text style={styles.subtitle}>Login to your DREAM account</Text>
 
         {/* Form */}
         <View style={styles.form}>
