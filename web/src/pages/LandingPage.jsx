@@ -13,15 +13,15 @@ const LandingPage = () => {
           <div className="text-center">
             <div className="flex justify-center mb-8">
               <div className="w-32 h-32 bg-gradient-to-br from-lgu-green-500 to-lgu-green-600 rounded-full flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
-                <span className="text-white font-bold text-6xl">T</span>
+                <span className="text-white font-bold text-6xl">D</span>
               </div>
             </div>
             
             <h1 className="text-6xl font-bold text-gray-900 mb-4 tracking-tight">
-              Tugon
+              DREAM
             </h1>
             <p className="text-2xl text-lgu-green-600 font-semibold mb-2">
-              Barangay Disaster Response System
+              Disaster Response and Emergency Action Management
             </p>
             <p className="text-lg text-gray-500 mb-10">
               San Isidro Labrador I
