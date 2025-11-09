@@ -506,8 +506,12 @@ const ResidentDashboardScreen = ({ onLogout }) => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={styles.detailModalContent}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailModalScrollContent}>
+          <ScrollView 
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.detailModalContent}>
               <View style={styles.detailModalHeader}>
                 <Text style={styles.detailModalTitle}>Emergency Details</Text>
                 <TouchableOpacity onPress={() => setShowEmergencyDetail(false)}>
