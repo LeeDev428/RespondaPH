@@ -24,23 +24,19 @@ const AnnouncementDetailModal = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.modalScrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.detailModalContent}>
-            <View style={styles.detailModalHeader}>
-              <Text style={styles.detailModalTitle}>Announcement</Text>
-              <TouchableOpacity onPress={onClose}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      <View style={styles.modalOverlay}>
+        <View style={styles.detailModalContent}>
+          <View style={styles.detailModalHeader}>
+            <Text style={styles.detailModalTitle}>Announcement</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
 
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={true}
+          >
             <View style={styles.announcementDetailHeader}>
               <Text style={styles.announcementDetailTitle}>{announcement.title}</Text>
               <View style={styles.announcementTypeBadge}>
@@ -62,16 +58,16 @@ const AnnouncementDetailModal = ({
                 </Text>
               )}
             </View>
+          </ScrollView>
 
-            <TouchableOpacity
-              style={styles.closeDetailButton}
-              onPress={onClose}
-            >
-              <Text style={styles.closeDetailButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <TouchableOpacity
+            style={styles.closeDetailButton}
+            onPress={onClose}
+          >
+            <Text style={styles.closeDetailButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -82,20 +78,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
-  },
-  modalScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 40,
   },
   detailModalContent: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 16,
-    width: '96%',
-    maxHeight: '92%',
+    width: '100%',
+    maxHeight: '100%',
+    padding: 20,
+  },
+  scrollView: {
+    flex: 1,
+    marginBottom: 10,
   },
   detailModalHeader: {
     flexDirection: 'row',
