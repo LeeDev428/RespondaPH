@@ -398,19 +398,15 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         transparent={true}
         onRequestClose={() => setShowReportModal(false)}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <ScrollView 
-            contentContainerStyle={styles.modalScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Report Emergency</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Report Emergency</Text>
             
-            <Text style={styles.label}>Emergency Type *</Text>
+            <ScrollView 
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text style={styles.label}>Emergency Type *</Text>
             <View style={styles.typeButtonsContainer}>
               {['fire', 'flood', 'medical', 'accident', 'crime', 'other'].map((type) => (
                 <TouchableOpacity
@@ -478,6 +474,8 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               ))}
             </View>
 
+            </ScrollView>
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -493,8 +491,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               </TouchableOpacity>
             </View>
           </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Emergency Detail Modal */}
@@ -803,20 +800,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
-  },
-  modalScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 40,
   },
   modalContent: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
     width: '100%',
-    maxWidth: 500,
+    maxHeight: '100%',
+  },
+  scrollView: {
+    flex: 1,
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 24,
