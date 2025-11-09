@@ -17,7 +17,9 @@ import { API_ENDPOINTS } from '../config/api';
 
 const ResponderDashboardScreen = ({ onLogout }) => {
   const [user, setUser] = useState(null);
+  const [activeView, setActiveView] = useState('dashboard');
   const [emergencies, setEmergencies] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -27,7 +29,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
 
   useEffect(() => {
     loadUserData();
-    fetchEmergencies();
+    fetchData();
   }, []);
 
   const loadUserData = async () => {
@@ -41,7 +43,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
     }
   };
 
-  const fetchEmergencies = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
@@ -53,17 +55,22 @@ const ResponderDashboardScreen = ({ onLogout }) => {
         return;
       }
       
-      const response = await axios.get(API_ENDPOINTS.EMERGENCIES, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setEmergencies(response.data);
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const [emergenciesRes, announcementsRes] = await Promise.all([
+        axios.get(API_ENDPOINTS.EMERGENCIES, config),
+        axios.get(API_ENDPOINTS.ANNOUNCEMENTS, config)
+      ]);
+      
+      setEmergencies(emergenciesRes.data);
+      setAnnouncements(announcementsRes.data);
     } catch (error) {
-      console.error('Error fetching emergencies:', error);
+      console.error('Error fetching data:', error);
       if (error.response?.status === 401) {
         Alert.alert('Session Expired', 'Please login again');
         onLogout();
       } else {
-        Alert.alert('Error', error.response?.data?.message || 'Failed to fetch emergencies');
+        Alert.alert('Error', error.response?.data?.message || 'Failed to fetch data');
       }
     } finally {
       setLoading(false);
@@ -89,7 +96,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
       setSelectedEmergency(null);
       setSelectedStatus('');
       setUpdateNotes('');
-      fetchEmergencies();
+      fetchData();
     } catch (error) {
       console.error('Error updating emergency:', error);
       Alert.alert('Error', 'Failed to update emergency status');
@@ -126,7 +133,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchEmergencies();
+    fetchData();
   };
 
   const handleLogout = () => {
@@ -149,100 +156,269 @@ const ResponderDashboardScreen = ({ onLogout }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Responder Dashboard</Text>
-          <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
-        </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
-        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>🚨 Assigned Emergencies</Text>
-          <Text style={styles.infoText}>
-            You have {emergencies.filter(e => e.status !== 'resolved').length} active emergency assignments
-          </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Responder Dashboard</Text>
+            <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
+          </View>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Emergencies List */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Emergency Assignments</Text>
-          
-          {loading ? (
-            <Text style={styles.loadingText}>Loading emergencies...</Text>
-          ) : emergencies.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No emergencies assigned yet</Text>
+        {activeView === 'dashboard' && (
+          <>
+            {/* Action Cards */}
+            <View style={styles.cardsContainer}>
+              <TouchableOpacity 
+                style={[styles.card, styles.cardRed]}
+                onPress={() => setActiveView('emergencies')}
+              >
+                <Text style={styles.cardIcon}>🚨</Text>
+                <Text style={styles.cardTitle}>Active Emergencies</Text>
+                <Text style={styles.cardSubtitle}>{emergencies.filter(e => e.status !== 'resolved').length} assignments</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.card, styles.cardGreen]}
+                onPress={() => setActiveView('history')}
+              >
+                <Text style={styles.cardIcon}>📖</Text>
+                <Text style={styles.cardTitle}>History</Text>
+                <Text style={styles.cardSubtitle}>{emergencies.filter(e => e.status === 'resolved').length} resolved</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.card, styles.cardBlue]}
+                onPress={() => setActiveView('announcements')}
+              >
+                <Text style={styles.cardIcon}>📢</Text>
+                <Text style={styles.cardTitle}>Announcements</Text>
+                <Text style={styles.cardSubtitle}>{announcements.length} updates</Text>
+              </TouchableOpacity>
             </View>
-          ) : (
-            emergencies.map((emergency) => (
-              <View key={emergency._id} style={styles.emergencyCard}>
-                <View style={styles.emergencyHeader}>
-                  <Text style={styles.emergencyType}>{emergency.type.toUpperCase()}</Text>
-                  <View style={styles.badgeContainer}>
-                    <View style={[styles.badge, { backgroundColor: getStatusColor(emergency.status) }]}>
-                      <Text style={styles.badgeText}>{emergency.status}</Text>
+
+            {/* Recent Critical Activity */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>� Critical Emergencies</Text>
+              {emergencies
+                .filter(e => e.priority === 'critical' && e.status !== 'resolved')
+                .slice(0, 3)
+                .length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>No critical emergencies</Text>
+                </View>
+              ) : (
+                emergencies
+                  .filter(e => e.priority === 'critical' && e.status !== 'resolved')
+                  .slice(0, 3)
+                  .map((emergency) => (
+                    <View key={emergency._id} style={styles.activityCard}>
+                      <View style={styles.activityHeader}>
+                        <Text style={styles.activityType}>{emergency.type.toUpperCase()}</Text>
+                        <View style={[styles.activityStatus, { backgroundColor: getStatusColor(emergency.status) }]}>
+                          <Text style={styles.activityStatusText}>{emergency.status}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.activityDescription}>{emergency.description}</Text>
+                      <Text style={styles.activityTime}>
+                        ⏰ {new Date(emergency.createdAt).toLocaleString()}
+                      </Text>
+                      <Text style={styles.activityLocation}>📍 {emergency.location.address}</Text>
+                      <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={() => {
+                          setActiveView('emergencies');
+                        }}
+                      >
+                        <Text style={styles.viewButtonText}>View All Emergencies →</Text>
+                      </TouchableOpacity>
                     </View>
-                    <View style={[styles.badge, { backgroundColor: getPriorityColor(emergency.priority) }]}>
-                      <Text style={styles.badgeText}>{emergency.priority}</Text>
+                  ))
+              )}
+            </View>
+          </>
+        )}
+
+        {activeView === 'emergencies' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Active Emergencies</Text>
+              <TouchableOpacity onPress={() => setActiveView('dashboard')}>
+                <Text style={styles.backLink}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {loading ? (
+              <Text style={styles.loadingText}>Loading emergencies...</Text>
+            ) : emergencies.filter(e => e.status !== 'resolved').length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No active emergencies</Text>
+              </View>
+            ) : (
+              emergencies.filter(e => e.status !== 'resolved').map((emergency) => (
+                <View key={emergency._id} style={styles.emergencyCard}>
+                  <View style={styles.emergencyHeader}>
+                    <Text style={styles.emergencyType}>{emergency.type.toUpperCase()}</Text>
+                    <View style={styles.badgeContainer}>
+                      <View style={[styles.badge, { backgroundColor: getStatusColor(emergency.status) }]}>
+                        <Text style={styles.badgeText}>{emergency.status}</Text>
+                      </View>
+                      <View style={[styles.badge, { backgroundColor: getPriorityColor(emergency.priority) }]}>
+                        <Text style={styles.badgeText}>{emergency.priority}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
 
-                <Text style={styles.emergencyDescription}>{emergency.description}</Text>
+                  <Text style={styles.emergencyDescription}>{emergency.description}</Text>
 
-                <View style={styles.emergencyDetails}>
-                  <Text style={styles.detailText}>
-                    📍 Location: {emergency.location.address}
-                  </Text>
-                  <Text style={styles.detailText}>
-                    📞 Contact: {emergency.contactNumber}
-                  </Text>
-                  <Text style={styles.detailText}>
-                    👤 Reported by: {emergency.reportedBy?.name}
-                  </Text>
-                  <Text style={styles.detailText}>
-                    ⏰ Time: {new Date(emergency.createdAt).toLocaleString()}
-                  </Text>
-                </View>
+                  <View style={styles.emergencyDetails}>
+                    <Text style={styles.detailText}>
+                      📍 Location: {emergency.location.address}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      📞 Contact: {emergency.contactNumber}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      👤 Reported by: {emergency.reportedBy?.name}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      ⏰ Time: {new Date(emergency.createdAt).toLocaleString()}
+                    </Text>
+                  </View>
 
-                {emergency.status !== 'resolved' && emergency.status !== 'cancelled' && (
                   <TouchableOpacity
                     style={styles.updateButton}
                     onPress={() => openUpdateModal(emergency)}
                   >
                     <Text style={styles.updateButtonText}>Update Status</Text>
                   </TouchableOpacity>
-                )}
 
-                {emergency.updates && emergency.updates.length > 0 && (
-                  <View style={styles.updatesSection}>
-                    <Text style={styles.updatesTitle}>Updates:</Text>
-                    {emergency.updates.slice(-3).map((update, index) => (
-                      <View key={index} style={styles.updateItem}>
-                        <Text style={styles.updateText}>
-                          {update.status} - {update.notes}
-                        </Text>
-                        <Text style={styles.updateTime}>
-                          {new Date(update.timestamp).toLocaleString()}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                  {emergency.updates && emergency.updates.length > 0 && (
+                    <View style={styles.updatesSection}>
+                      <Text style={styles.updatesTitle}>Updates:</Text>
+                      {emergency.updates.slice(-3).map((update, index) => (
+                        <View key={index} style={styles.updateItem}>
+                          <Text style={styles.updateText}>
+                            {update.updatedBy?.name || 'Responder'}: {update.status}
+                          </Text>
+                          {update.notes && (
+                            <Text style={styles.updateNotes}>📝 {update.notes}</Text>
+                          )}
+                          <Text style={styles.updateTime}>
+                            {new Date(update.timestamp).toLocaleString()}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        {activeView === 'history' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Emergency History</Text>
+              <TouchableOpacity onPress={() => setActiveView('dashboard')}>
+                <Text style={styles.backLink}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {emergencies.filter(e => e.status === 'resolved').length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No resolved emergencies</Text>
               </View>
-            ))
-          )}
-        </View>
+            ) : (
+              emergencies.filter(e => e.status === 'resolved').map((emergency) => (
+                <View key={emergency._id} style={styles.emergencyCard}>
+                  <View style={styles.emergencyHeader}>
+                    <Text style={styles.emergencyType}>{emergency.type.toUpperCase()}</Text>
+                    <View style={[styles.badge, { backgroundColor: getStatusColor(emergency.status) }]}>
+                      <Text style={styles.badgeText}>{emergency.status}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.emergencyDescription}>{emergency.description}</Text>
+
+                  <View style={styles.emergencyDetails}>
+                    <Text style={styles.detailText}>
+                      📍 Location: {emergency.location.address}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      ⏰ Reported: {new Date(emergency.createdAt).toLocaleString()}
+                    </Text>
+                    {emergency.resolvedAt && (
+                      <Text style={styles.detailText}>
+                        ✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}
+                      </Text>
+                    )}
+                  </View>
+
+                  {emergency.updates && emergency.updates.length > 0 && (
+                    <View style={styles.updatesSection}>
+                      <Text style={styles.updatesTitle}>Updates:</Text>
+                      {emergency.updates.map((update, index) => (
+                        <View key={index} style={styles.updateItem}>
+                          <Text style={styles.updateText}>
+                            {update.updatedBy?.name || 'Responder'}: {update.status}
+                          </Text>
+                          {update.notes && (
+                            <Text style={styles.updateNotes}>📝 {update.notes}</Text>
+                          )}
+                          <Text style={styles.updateTime}>
+                            {new Date(update.timestamp).toLocaleString()}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        {activeView === 'announcements' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Announcements</Text>
+              <TouchableOpacity onPress={() => setActiveView('dashboard')}>
+                <Text style={styles.backLink}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {announcements.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No announcements yet</Text>
+              </View>
+            ) : (
+              announcements.map((announcement) => (
+                <View key={announcement._id} style={styles.announcementCard}>
+                  <View style={styles.announcementHeader}>
+                    <Text style={styles.announcementTitle}>{announcement.title}</Text>
+                    <View style={styles.announcementTypeBadge}>
+                      <Text style={styles.announcementTypeBadgeText}>{announcement.type}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.announcementMessage}>{announcement.message}</Text>
+                  <Text style={styles.announcementTime}>
+                    📅 {new Date(announcement.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              ))
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* Update Status Modal */}
@@ -341,7 +517,10 @@ const ResponderDashboardScreen = ({ onLogout }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f0fdf4',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     backgroundColor: '#10b981',
@@ -368,6 +547,132 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 16,
+    gap: 12,
+  },
+  card: {
+    flex: 1,
+    minWidth: '45%',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardRed: {
+    backgroundColor: '#FEE2E2',
+  },
+  cardGreen: {
+    backgroundColor: '#D1FAE5',
+  },
+  cardBlue: {
+    backgroundColor: '#DBEAFE',
+  },
+  cardIcon: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  section: {
+    padding: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  backLink: {
+    fontSize: 16,
+    color: '#10b981',
+    fontWeight: '600',
+  },
+  activityCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activityType: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  activityStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  activityStatusText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  activityDescription: {
+    fontSize: 13,
+    color: '#4b5563',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  activityTime: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginBottom: 4,
+  },
+  activityLocation: {
+    fontSize: 11,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  viewButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  viewButtonText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: 'bold',
   },
   content: {
@@ -495,11 +800,64 @@ const styles = StyleSheet.create({
   updateText: {
     fontSize: 11,
     color: '#4b5563',
+    marginBottom: 2,
+  },
+  updateNotes: {
+    fontSize: 11,
+    color: '#10b981',
+    fontStyle: 'italic',
+    marginBottom: 2,
   },
   updateTime: {
     fontSize: 10,
     color: '#9ca3af',
     marginTop: 2,
+  },
+  announcementCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  announcementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  announcementTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    flex: 1,
+    marginRight: 8,
+  },
+  announcementTypeBadge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  announcementTypeBadgeText: {
+    fontSize: 10,
+    color: '#1e40af',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  announcementMessage: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  announcementTime: {
+    fontSize: 11,
+    color: '#9ca3af',
   },
   modalOverlay: {
     flex: 1,
