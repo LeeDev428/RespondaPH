@@ -16,12 +16,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '../config/api';
 
 const LoginScreen = ({ onBack, onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!emailOrPhone || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -29,15 +29,15 @@ const LoginScreen = ({ onBack, onLoginSuccess }) => {
     setLoading(true);
     try {
       const response = await axios.post(API_ENDPOINTS.LOGIN, {
-        email,
+        emailOrPhone,
         password
       });
 
-      // Store the token
+      // Store the token and user data
       await AsyncStorage.setItem('token', response.data.token);
       await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
 
-      Alert.alert('Success', 'Login successful!');
+      Alert.alert('Success', `Welcome ${response.data.user.name}!`);
       onLoginSuccess();
     } catch (error) {
       console.error('Login error:', error);
@@ -80,13 +80,12 @@ const LoginScreen = ({ onBack, onLoginSuccess }) => {
         {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Email or Phone Number</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
+              placeholder="Enter email or phone number"
+              value={emailOrPhone}
+              onChangeText={setEmailOrPhone}
               autoCapitalize="none"
             />
           </View>
