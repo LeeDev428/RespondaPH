@@ -14,10 +14,13 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/emergencies', require('./routes/emergencies'));
+app.use('/api/announcements', require('./routes/announcements'));
+app.use('/api/responders', require('./routes/responders'));
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Tugon API is running' });
+  res.json({ message: 'DREAM API is running' });
 });
 
 const PORT = process.env.PORT || 5000;
