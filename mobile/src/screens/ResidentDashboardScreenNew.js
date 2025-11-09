@@ -9,7 +9,9 @@ import {
   Modal,
   TextInput,
   Alert,
-  RefreshControl
+  RefreshControl,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -52,6 +54,14 @@ const ResidentDashboardScreen = ({ onLogout }) => {
   const fetchData = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No token found in storage');
+        Alert.alert('Session Expired', 'Please login again');
+        onLogout();
+        return;
+      }
+      
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
       const [emergenciesRes, announcementsRes] = await Promise.all([
@@ -63,6 +73,12 @@ const ResidentDashboardScreen = ({ onLogout }) => {
       setAnnouncements(announcementsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      if (error.response?.status === 401) {
+        Alert.alert('Session Expired', 'Please login again');
+        onLogout();
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to fetch data');
+      }
     } finally {
       setRefreshing(false);
     }
@@ -134,8 +150,8 @@ const ResidentDashboardScreen = ({ onLogout }) => {
             <Text style={styles.headerTitle}>Resident Dashboard</Text>
             <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
+          <TouchableOpacity style={styles.logoutIconButton} onPress={onLogout}>
+            <Text style={styles.logoutIcon}>🚪</Text>
           </TouchableOpacity>
         </View>
 
@@ -257,9 +273,17 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         transparent={true}
         onRequestClose={() => setShowReportModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Report Emergency</Text>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Report Emergency</Text>
             
             <Text style={styles.label}>Emergency Type *</Text>
             <View style={styles.typeButtonsContainer}>
@@ -343,8 +367,9 @@ const ResidentDashboardScreen = ({ onLogout }) => {
                 <Text style={styles.submitButtonText}>Submit Report</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -384,6 +409,22 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  logoutIconButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  logoutIcon: {
+    fontSize: 24,
   },
   cardsContainer: {
     flexDirection: 'row',
