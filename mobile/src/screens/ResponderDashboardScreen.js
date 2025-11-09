@@ -20,6 +20,10 @@ const ResponderDashboardScreen = ({ onLogout }) => {
   const [emergencies, setEmergencies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedEmergency, setSelectedEmergency] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [updateNotes, setUpdateNotes] = useState('');
 
   useEffect(() => {
     loadUserData();
@@ -67,15 +71,24 @@ const ResponderDashboardScreen = ({ onLogout }) => {
     }
   };
 
-  const handleUpdateStatus = async (emergencyId, newStatus, notes) => {
+  const handleUpdateStatus = async () => {
+    if (!selectedStatus) {
+      Alert.alert('Error', 'Please select a status');
+      return;
+    }
+
     try {
       const token = await AsyncStorage.getItem('token');
       await axios.put(
-        `${API_ENDPOINTS.EMERGENCIES}/${emergencyId}`,
-        { status: newStatus, notes },
+        `${API_ENDPOINTS.EMERGENCIES}/${selectedEmergency._id}`,
+        { status: selectedStatus, notes: updateNotes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       Alert.alert('Success', 'Emergency status updated');
+      setShowUpdateModal(false);
+      setSelectedEmergency(null);
+      setSelectedStatus('');
+      setUpdateNotes('');
       fetchEmergencies();
     } catch (error) {
       console.error('Error updating emergency:', error);
@@ -83,23 +96,11 @@ const ResponderDashboardScreen = ({ onLogout }) => {
     }
   };
 
-  const showStatusOptions = (emergencyId, currentStatus) => {
-    const statusOptions = ['responding', 'resolved'];
-    
-    Alert.alert(
-      'Update Status',
-      'Select new status:',
-      statusOptions.map(status => ({
-        text: status.toUpperCase(),
-        onPress: () => {
-          Alert.prompt(
-            'Add Notes',
-            'Enter update notes:',
-            (notes) => handleUpdateStatus(emergencyId, status, notes)
-          );
-        }
-      })).concat([{ text: 'Cancel', style: 'cancel' }])
-    );
+  const openUpdateModal = (emergency) => {
+    setSelectedEmergency(emergency);
+    setSelectedStatus('');
+    setUpdateNotes('');
+    setShowUpdateModal(true);
   };
 
   const getStatusColor = (status) => {
@@ -217,7 +218,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
                 {emergency.status !== 'resolved' && emergency.status !== 'cancelled' && (
                   <TouchableOpacity
                     style={styles.updateButton}
-                    onPress={() => showStatusOptions(emergency._id, emergency.status)}
+                    onPress={() => openUpdateModal(emergency)}
                   >
                     <Text style={styles.updateButtonText}>Update Status</Text>
                   </TouchableOpacity>
@@ -243,6 +244,96 @@ const ResponderDashboardScreen = ({ onLogout }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Update Status Modal */}
+      <Modal
+        visible={showUpdateModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowUpdateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Emergency Status</Text>
+            
+            {selectedEmergency && (
+              <View style={styles.emergencyInfo}>
+                <Text style={styles.emergencyInfoText}>
+                  📍 {selectedEmergency.type}
+                </Text>
+                <Text style={styles.emergencyInfoText}>
+                  {selectedEmergency.description}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.label}>Select Status:</Text>
+            <View style={styles.statusButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.statusButton,
+                  selectedStatus === 'responding' && styles.statusButtonActive
+                ]}
+                onPress={() => setSelectedStatus('responding')}
+              >
+                <Text style={[
+                  styles.statusButtonText,
+                  selectedStatus === 'responding' && styles.statusButtonTextActive
+                ]}>
+                  Responding
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.statusButton,
+                  selectedStatus === 'resolved' && styles.statusButtonActive
+                ]}
+                onPress={() => setSelectedStatus('resolved')}
+              >
+                <Text style={[
+                  styles.statusButtonText,
+                  selectedStatus === 'resolved' && styles.statusButtonTextActive
+                ]}>
+                  Resolved
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>Notes (optional):</Text>
+            <TextInput
+              style={styles.notesInput}
+              placeholder="Add update notes..."
+              multiline
+              numberOfLines={4}
+              value={updateNotes}
+              onChangeText={setUpdateNotes}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setShowUpdateModal(false);
+                  setSelectedEmergency(null);
+                  setSelectedStatus('');
+                  setUpdateNotes('');
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleUpdateStatus}
+              >
+                <Text style={styles.submitButtonText}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -409,6 +500,109 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#9ca3af',
     marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  emergencyInfo: {
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  emergencyInfoText: {
+    fontSize: 13,
+    color: '#4b5563',
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  statusButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statusButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    backgroundColor: 'white',
+    alignItems: 'center',
+  },
+  statusButtonActive: {
+    borderColor: '#10b981',
+    backgroundColor: '#d1fae5',
+  },
+  statusButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  statusButtonTextActive: {
+    color: '#10b981',
+  },
+  notesInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 100,
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  submitButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
   },
 });
 
