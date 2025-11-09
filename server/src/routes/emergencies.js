@@ -55,6 +55,7 @@ router.get('/', auth, async (req, res) => {
     const emergencies = await Emergency.find(query)
       .populate('reportedBy', 'name phoneNumber email')
       .populate('assignedResponders', 'name phoneNumber email')
+      .populate('updates.updatedBy', 'name role')
       .sort({ createdAt: -1 });
 
     res.json(emergencies);
@@ -166,6 +167,7 @@ router.put('/:id', auth, async (req, res) => {
     await emergency.save();
     await emergency.populate('reportedBy', 'name phoneNumber email');
     await emergency.populate('assignedResponders', 'name phoneNumber email');
+    await emergency.populate('updates.updatedBy', 'name role');
 
     res.json(emergency);
   } catch (error) {
