@@ -133,14 +133,8 @@ const ResponderDashboardScreen = ({ onLogout }) => {
           <Text style={styles.headerTitle}>Responder Dashboard</Text>
           <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
         </View>
-        <TouchableOpacity style={styles.logoutIconButton} onPress={onLogout}>
-          <View style={styles.logoutIconContainer}>
-            <View style={styles.logoutArrow}>
-              <View style={styles.arrowLine} />
-              <View style={styles.arrowHead} />
-            </View>
-            <View style={styles.logoutDoor} />
-          </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
@@ -264,54 +258,6 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  logoutIconButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoutIconContainer: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoutArrow: {
-    position: 'absolute',
-    left: 0,
-  },
-  arrowLine: {
-    width: 12,
-    height: 2,
-    backgroundColor: 'white',
-    position: 'absolute',
-    left: 0,
-    top: 11,
-  },
-  arrowHead: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 4,
-    borderTopColor: 'transparent',
-    borderBottomWidth: 4,
-    borderBottomColor: 'transparent',
-    borderLeftWidth: 5,
-    borderLeftColor: 'white',
-    position: 'absolute',
-    left: 0,
-    top: 8,
-  },
-  logoutDoor: {
-    width: 10,
-    height: 16,
-    borderWidth: 2,
-    borderColor: 'white',
-    borderRadius: 2,
-    position: 'absolute',
-    right: 0,
   },
   content: {
     flex: 1,
