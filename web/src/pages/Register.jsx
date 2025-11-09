@@ -9,6 +9,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: ''
   })
@@ -41,8 +42,8 @@ const Register = () => {
       const response = await axios.post('http://localhost:5000/api/auth/register', {
         name: formData.name,
         email: formData.email,
-        password: formData.password,
-        role: 'resident' // Always register as resident for security
+        phoneNumber: formData.phoneNumber,
+        password: formData.password
       })
       
       login(response.data.token, response.data.user)
@@ -112,6 +113,22 @@ const Register = () => {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lgu-green-500 focus:border-transparent"
                 placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lgu-green-500 focus:border-transparent"
+                placeholder="09123456789"
               />
             </div>
 
