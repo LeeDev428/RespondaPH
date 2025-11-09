@@ -1,11 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import ResidentDashboardScreen from './src/screens/ResidentDashboardScreen';
+import ResidentDashboardScreenNew from './src/screens/ResidentDashboardScreenNew';
+import ResponderDashboardScreen from './src/screens/ResponderDashboardScreen';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('welcome');
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const userData = await AsyncStorage.getItem('user');
+      if (token && userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+        setCurrentScreen(user.role === 'responder' ? 'responder-dashboard' : 'resident-dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    }
+  };
 
   const handleLogin = () => {
     setCurrentScreen('login');
@@ -19,8 +40,33 @@ export default function App() {
     setCurrentScreen('welcome');
   };
 
-  const handleLoginSuccess = () => {
-    setCurrentScreen('dashboard');
+  const handleLoginSuccess = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.role);
+        if (user.role === 'responder') {
+          setCurrentScreen('responder-dashboard');
+        } else {
+          setCurrentScreen('resident-dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Error handling login success:', error);
+      setCurrentScreen('resident-dashboard');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+      setUserRole(null);
+      setCurrentScreen('welcome');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   // Welcome Screen
@@ -78,9 +124,14 @@ export default function App() {
     return <RegisterScreen onBack={handleBack} />;
   }
 
-  // Dashboard Screen
-  if (currentScreen === 'dashboard') {
-    return <ResidentDashboardScreen onLogout={handleBack} />;
+  // Resident Dashboard Screen
+  if (currentScreen === 'resident-dashboard') {
+    return <ResidentDashboardScreenNew onLogout={handleLogout} />;
+  }
+
+  // Responder Dashboard Screen
+  if (currentScreen === 'responder-dashboard') {
+    return <ResponderDashboardScreen onLogout={handleLogout} />;
   }
 
   return null;
