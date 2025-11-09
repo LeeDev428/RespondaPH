@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [formData, setFormData] = useState({ emailOrPhone: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useContext(AuthContext)
@@ -62,18 +62,18 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-2">
+                Email or Phone Number
               </label>
               <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                id="emailOrPhone"
+                name="emailOrPhone"
+                value={formData.emailOrPhone}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lgu-green-500 focus:border-transparent"
-                placeholder="you@example.com"
+                placeholder="Email or phone number"
               />
             </div>
 
