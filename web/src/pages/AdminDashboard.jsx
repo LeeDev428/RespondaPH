@@ -370,6 +370,28 @@ const AdminDashboard = () => {
                           </div>
                         )}
 
+                        {emergency.updates && emergency.updates.length > 0 && (
+                          <div className="mb-4 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                            <p className="font-semibold text-green-900 mb-2">Updates & Notes:</p>
+                            {emergency.updates.map((update, index) => (
+                              <div key={index} className="mb-3 pb-3 border-b border-green-200 last:border-0 last:pb-0 last:mb-0">
+                                <div className="flex justify-between items-start mb-1">
+                                  <p className="text-sm font-semibold text-green-900">
+                                    {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
+                                  </p>
+                                  <p className="text-xs text-green-600">
+                                    {new Date(update.timestamp).toLocaleString()}
+                                  </p>
+                                </div>
+                                <p className="text-sm text-green-700 mb-1">Status: {update.status}</p>
+                                {update.notes && (
+                                  <p className="text-sm text-green-800 italic">📝 {update.notes}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         {emergency.status === 'pending' && (
                           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                             <h4 className="font-semibold mb-3">Dispatch Responders</h4>
