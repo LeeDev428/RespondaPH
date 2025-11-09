@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const bcrypt = require('bcrypt');
 
 // @route   GET /api/responders
 // @desc    Get all responders
@@ -40,7 +41,6 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'User with this email or phone number already exists' });
     }
 
-    const bcrypt = require('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
