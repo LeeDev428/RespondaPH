@@ -16,6 +16,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
+import EmergencyDetailModal from '../components/EmergencyDetailModal';
+import AnnouncementDetailModal from '../components/AnnouncementDetailModal';
 
 const ResidentDashboardScreen = ({ onLogout }) => {
   const [user, setUser] = useState(null);
@@ -496,171 +498,19 @@ const ResidentDashboardScreen = ({ onLogout }) => {
       </Modal>
 
       {/* Emergency Detail Modal */}
-      <Modal
+      <EmergencyDetailModal 
         visible={showEmergencyDetail}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowEmergencyDetail(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <ScrollView 
-            contentContainerStyle={styles.modalScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.detailModalContent}>
-              <View style={styles.detailModalHeader}>
-                <Text style={styles.detailModalTitle}>Emergency Details</Text>
-                <TouchableOpacity onPress={() => setShowEmergencyDetail(false)}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              {selectedEmergency && (
-                <>
-                  <View style={styles.detailSection}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Type:</Text>
-                      <Text style={styles.detailValue}>{selectedEmergency.type.toUpperCase()}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Status:</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedEmergency.status) }]}>
-                        <Text style={styles.statusText}>{selectedEmergency.status}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Priority:</Text>
-                      <Text style={[styles.detailValue, styles.priorityText]}>{selectedEmergency.priority.toUpperCase()}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Description</Text>
-                    <Text style={styles.detailText}>{selectedEmergency.description}</Text>
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Location</Text>
-                    <Text style={styles.detailText}>📍 {selectedEmergency.location.address}</Text>
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Contact</Text>
-                    <Text style={styles.detailText}>📞 {selectedEmergency.contactNumber}</Text>
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailSectionTitle}>Timeline</Text>
-                    <Text style={styles.detailText}>⏰ Reported: {new Date(selectedEmergency.createdAt).toLocaleString()}</Text>
-                    {selectedEmergency.resolvedAt && (
-                      <Text style={styles.detailText}>✅ Resolved: {new Date(selectedEmergency.resolvedAt).toLocaleString()}</Text>
-                    )}
-                  </View>
-
-                  {selectedEmergency.assignedResponders?.length > 0 && (
-                    <View style={styles.detailSection}>
-                      <Text style={styles.detailSectionTitle}>Assigned Responders</Text>
-                      {selectedEmergency.assignedResponders.map((responder, index) => (
-                        <Text key={index} style={styles.detailText}>
-                          👨‍🚒 {responder.name} - {responder.phoneNumber}
-                        </Text>
-                      ))}
-                    </View>
-                  )}
-
-                  {selectedEmergency.updates && selectedEmergency.updates.length > 0 && (
-                    <View style={styles.detailSection}>
-                      <Text style={styles.detailSectionTitle}>Updates & Notes</Text>
-                      {selectedEmergency.updates.map((update, index) => (
-                        <View key={index} style={styles.updateItem}>
-                          <View style={styles.updateHeader}>
-                            <Text style={styles.updateBy}>
-                              {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
-                            </Text>
-                            <Text style={styles.updateTime}>
-                              {new Date(update.timestamp).toLocaleString()}
-                            </Text>
-                          </View>
-                          <Text style={styles.updateStatus}>Status: {update.status}</Text>
-                          {update.notes && (
-                            <Text style={styles.updateNotes}>📝 {update.notes}</Text>
-                          )}
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </>
-              )}
-
-              <TouchableOpacity
-                style={styles.closeDetailButton}
-                onPress={() => setShowEmergencyDetail(false)}
-              >
-                <Text style={styles.closeDetailButtonText}>Close</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        onClose={() => setShowEmergencyDetail(false)}
+        emergency={selectedEmergency}
+        getStatusColor={getStatusColor}
+      />
 
       {/* Announcement Detail Modal */}
-      <Modal
+      <AnnouncementDetailModal 
         visible={showAnnouncementDetail}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowAnnouncementDetail(false)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.detailModalContent}>
-            <View style={styles.detailModalHeader}>
-              <Text style={styles.detailModalTitle}>Announcement</Text>
-              <TouchableOpacity onPress={() => setShowAnnouncementDetail(false)}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {selectedAnnouncement && (
-              <>
-                <View style={styles.announcementDetailHeader}>
-                  <Text style={styles.announcementDetailTitle}>{selectedAnnouncement.title}</Text>
-                  <View style={styles.announcementTypeBadge}>
-                    <Text style={styles.announcementTypeBadgeText}>{selectedAnnouncement.type}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <Text style={styles.announcementDetailMessage}>{selectedAnnouncement.message}</Text>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailText}>
-                    📅 Posted: {new Date(selectedAnnouncement.createdAt).toLocaleString()}
-                  </Text>
-                  {selectedAnnouncement.createdBy && (
-                    <Text style={styles.detailText}>
-                      👤 By: {selectedAnnouncement.createdBy.name || 'Admin'}
-                    </Text>
-                  )}
-                </View>
-
-                <TouchableOpacity
-                  style={styles.closeDetailButton}
-                  onPress={() => setShowAnnouncementDetail(false)}
-                >
-                  <Text style={styles.closeDetailButtonText}>Close</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        onClose={() => setShowAnnouncementDetail(false)}
+        announcement={selectedAnnouncement}
+      />
     </SafeAreaView>
   );
 };
@@ -953,13 +803,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 8,
   },
   modalScrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 8,
   },
   modalContent: {
     backgroundColor: 'white',
@@ -1080,141 +930,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'right',
   },
-  detailModalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    maxHeight: '85%',
-  },
-  detailModalScrollContent: {
-    flexGrow: 1,
-  },
-  detailModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  detailModalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  closeButton: {
-    fontSize: 28,
-    color: '#9ca3af',
-    fontWeight: 'bold',
-  },
-  detailSection: {
-    marginBottom: 20,
-  },
-  detailSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 10,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: '#1f2937',
-    fontWeight: 'bold',
-  },
-  priorityText: {
-    color: '#ef4444',
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 22,
-    marginBottom: 6,
-  },
-  updateItem: {
-    backgroundColor: '#f9fafb',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#10b981',
-  },
-  updateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  updateBy: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  updateTime: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
-  updateStatus: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  updateNotes: {
-    fontSize: 13,
-    color: '#4b5563',
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
-  closeDetailButton: {
-    backgroundColor: '#10b981',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  closeDetailButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  announcementDetailHeader: {
-    marginBottom: 20,
-  },
-  announcementDetailTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  announcementTypeBadge: {
-    backgroundColor: '#DBEAFE',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  announcementTypeBadgeText: {
-    fontSize: 12,
-    color: '#1e40af',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  announcementDetailMessage: {
-    fontSize: 15,
-    color: '#374151',
-    lineHeight: 24,
-  },
+
 });
 
 export default ResidentDashboardScreen;
