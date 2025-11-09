@@ -24,6 +24,10 @@ const ResidentDashboardScreen = ({ onLogout }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [showReportModal, setShowReportModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedEmergency, setSelectedEmergency] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [showEmergencyDetail, setShowEmergencyDetail] = useState(false);
+  const [showAnnouncementDetail, setShowAnnouncementDetail] = useState(false);
   
   const [reportForm, setReportForm] = useState({
     type: '',
@@ -203,6 +207,15 @@ const ResidentDashboardScreen = ({ onLogout }) => {
                 <Text style={styles.cardTitle}>Announcements</Text>
                 <Text style={styles.cardSubtitle}>Check updates ({announcements.length})</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.card, styles.cardGreen]}
+                onPress={() => setActiveView('history')}
+              >
+                <Text style={styles.cardIcon}>📖</Text>
+                <Text style={styles.cardTitle}>Emergency History</Text>
+                <Text style={styles.cardSubtitle}>Resolved reports ({emergencies.filter(e => e.status === 'resolved').length})</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Recent Activity */}
@@ -248,19 +261,26 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         {activeView === 'reports' && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>My Emergency Reports</Text>
+              <Text style={styles.sectionTitle}>My Emergency Reports (Active)</Text>
               <TouchableOpacity onPress={() => setActiveView('home')}>
                 <Text style={styles.backLink}>← Back</Text>
               </TouchableOpacity>
             </View>
             
-            {emergencies.length === 0 ? (
+            {emergencies.filter(e => e.status !== 'resolved').length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No reports yet</Text>
+                <Text style={styles.emptyText}>No active reports</Text>
               </View>
             ) : (
-              emergencies.map((emergency) => (
-                <View key={emergency._id} style={styles.reportCard}>
+              emergencies.filter(e => e.status !== 'resolved').map((emergency) => (
+                <TouchableOpacity 
+                  key={emergency._id} 
+                  style={styles.reportCard}
+                  onPress={() => {
+                    setSelectedEmergency(emergency);
+                    setShowEmergencyDetail(true);
+                  }}
+                >
                   <View style={styles.reportHeader}>
                     <Text style={styles.reportType}>{emergency.type.toUpperCase()}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor(emergency.status) }]}>
@@ -277,7 +297,54 @@ const ResidentDashboardScreen = ({ onLogout }) => {
                       👨‍🚒 Responders: {emergency.assignedResponders.map(r => r.name).join(', ')}
                     </Text>
                   )}
-                </View>
+                  <Text style={styles.viewDetailsLink}>Tap to view details →</Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        )}
+
+        {activeView === 'history' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Emergency History</Text>
+              <TouchableOpacity onPress={() => setActiveView('home')}>
+                <Text style={styles.backLink}>← Back</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {emergencies.filter(e => e.status === 'resolved').length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No resolved emergencies</Text>
+              </View>
+            ) : (
+              emergencies.filter(e => e.status === 'resolved').map((emergency) => (
+                <TouchableOpacity 
+                  key={emergency._id} 
+                  style={styles.reportCard}
+                  onPress={() => {
+                    setSelectedEmergency(emergency);
+                    setShowEmergencyDetail(true);
+                  }}
+                >
+                  <View style={styles.reportHeader}>
+                    <Text style={styles.reportType}>{emergency.type.toUpperCase()}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(emergency.status) }]}>
+                      <Text style={styles.statusText}>{emergency.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.reportDescription}>{emergency.description}</Text>
+                  <Text style={styles.reportDetail}>📍 {emergency.location.address}</Text>
+                  <Text style={styles.reportDetail}>
+                    ⏰ Reported: {new Date(emergency.createdAt).toLocaleString()}
+                  </Text>
+                  {emergency.resolvedAt && (
+                    <Text style={styles.reportDetail}>
+                      ✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}
+                    </Text>
+                  )}
+                  <Text style={styles.viewDetailsLink}>Tap to view details →</Text>
+                </TouchableOpacity>
               ))
             )}
           </View>
