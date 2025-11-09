@@ -243,9 +243,13 @@ const AdminDashboard = () => {
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-600 transition mt-4"
+                className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-600 transition mt-4 flex items-center gap-2"
               >
-                🚪 Logout
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="inline-block">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Logout
               </button>
             </nav>
           </div>
