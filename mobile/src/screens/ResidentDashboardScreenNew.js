@@ -136,6 +136,24 @@ const ResidentDashboardScreen = ({ onLogout }) => {
     return colors[status] || '#9CA3AF';
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: onLogout
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -150,7 +168,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
             <Text style={styles.headerTitle}>Resident Dashboard</Text>
             <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
           </View>
-          <TouchableOpacity style={styles.logoutIconButton} onPress={onLogout}>
+          <TouchableOpacity style={styles.logoutIconButton} onPress={handleLogout}>
             <Text style={styles.logoutIcon}>🚪</Text>
           </TouchableOpacity>
         </View>
@@ -187,12 +205,42 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Info Box */}
-            <View style={styles.infoBox}>
-              <Text style={styles.infoTitle}>Welcome to DREAM!</Text>
-              <Text style={styles.infoText}>
-                You can now report emergencies, view your submissions, and receive real-time alerts from Barangay San Isidro Labrador I.
-              </Text>
+            {/* Recent Activity */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              {emergencies
+                .filter(e => e.status === 'dispatched' || e.status === 'responding')
+                .sort((a, b) => {
+                  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+                  return priorityOrder[a.priority] - priorityOrder[b.priority];
+                })
+                .slice(0, 3)
+                .map((emergency) => (
+                  <View key={emergency._id} style={styles.activityCard}>
+                    <View style={styles.activityHeader}>
+                      <Text style={styles.activityType}>{emergency.type.toUpperCase()}</Text>
+                      <View style={[styles.activityStatus, { backgroundColor: getStatusColor(emergency.status) }]}>
+                        <Text style={styles.activityStatusText}>{emergency.status}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.activityDescription} numberOfLines={2}>
+                      {emergency.description}
+                    </Text>
+                    <Text style={styles.activityTime}>
+                      ⏰ {new Date(emergency.createdAt).toLocaleString()}
+                    </Text>
+                    {emergency.assignedResponders?.length > 0 && (
+                      <Text style={styles.activityResponders}>
+                        👨‍🚒 {emergency.assignedResponders.length} responder(s) assigned
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              {emergencies.filter(e => e.status === 'dispatched' || e.status === 'responding').length === 0 && (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>No active emergencies</Text>
+                </View>
+              )}
             </View>
           </>
         )}
@@ -487,6 +535,57 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1E40AF',
     lineHeight: 20,
+  },
+  activityCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activityType: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  activityStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  activityStatusText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  activityDescription: {
+    fontSize: 13,
+    color: '#4b5563',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  activityTime: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginBottom: 4,
+  },
+  activityResponders: {
+    fontSize: 11,
+    color: '#10b981',
+    fontWeight: '600',
   },
   section: {
     padding: 16,
