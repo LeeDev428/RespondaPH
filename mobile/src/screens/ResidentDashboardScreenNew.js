@@ -398,16 +398,22 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         transparent={true}
         onRequestClose={() => setShowReportModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Report Emergency</Text>
-            
-            <ScrollView 
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={true}
-            >
-              <Text style={styles.label}>Emergency Type *</Text>
-            <View style={styles.typeButtonsContainer}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Report Emergency</Text>
+              
+              <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollViewContent}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                <Text style={styles.label}>Emergency Type *</Text>
+              <View style={styles.typeButtonsContainer}>
               {['fire', 'flood', 'medical', 'accident', 'crime', 'other'].map((type) => (
                 <TouchableOpacity
                   key={type}
@@ -491,13 +497,17 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Emergency Detail Modal */}
       <EmergencyDetailModal 
         visible={showEmergencyDetail}
-        onClose={() => setShowEmergencyDetail(false)}
+        onClose={() => {
+          setShowEmergencyDetail(false);
+          setSelectedEmergency(null);
+        }}
         emergency={selectedEmergency}
         getStatusColor={getStatusColor}
       />
@@ -505,7 +515,10 @@ const ResidentDashboardScreen = ({ onLogout }) => {
       {/* Announcement Detail Modal */}
       <AnnouncementDetailModal 
         visible={showAnnouncementDetail}
-        onClose={() => setShowAnnouncementDetail(false)}
+        onClose={() => {
+          setShowAnnouncementDetail(false);
+          setSelectedAnnouncement(null);
+        }}
         announcement={selectedAnnouncement}
       />
     </SafeAreaView>
@@ -808,11 +821,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     width: '100%',
-    maxHeight: '100%',
+    maxHeight: '90%',
   },
   scrollView: {
-    flex: 1,
+    maxHeight: 450,
     marginBottom: 10,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   modalTitle: {
     fontSize: 24,
