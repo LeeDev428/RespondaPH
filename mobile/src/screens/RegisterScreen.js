@@ -17,12 +17,13 @@ import { API_ENDPOINTS } from '../config/api';
 const RegisterScreen = ({ onBack }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !phoneNumber || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -37,8 +38,8 @@ const RegisterScreen = ({ onBack }) => {
       await axios.post(API_ENDPOINTS.REGISTER, {
         name,
         email,
-        password,
-        role: 'resident' // Always register as resident for security
+        phoneNumber,
+        password
       });
 
       Alert.alert(
@@ -105,6 +106,17 @@ const RegisterScreen = ({ onBack }) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your phone number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
             />
           </View>
 
