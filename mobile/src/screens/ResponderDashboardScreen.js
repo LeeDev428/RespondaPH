@@ -39,13 +39,26 @@ const ResponderDashboardScreen = ({ onLogout }) => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No token found in storage');
+        Alert.alert('Session Expired', 'Please login again');
+        onLogout();
+        return;
+      }
+      
       const response = await axios.get(API_ENDPOINTS.EMERGENCIES, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setEmergencies(response.data);
     } catch (error) {
       console.error('Error fetching emergencies:', error);
-      Alert.alert('Error', 'Failed to fetch emergencies');
+      if (error.response?.status === 401) {
+        Alert.alert('Session Expired', 'Please login again');
+        onLogout();
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to fetch emergencies');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -120,8 +133,14 @@ const ResponderDashboardScreen = ({ onLogout }) => {
           <Text style={styles.headerTitle}>Responder Dashboard</Text>
           <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
+        <TouchableOpacity style={styles.logoutIconButton} onPress={onLogout}>
+          <View style={styles.logoutIconContainer}>
+            <View style={styles.logoutArrow}>
+              <View style={styles.arrowLine} />
+              <View style={styles.arrowHead} />
+            </View>
+            <View style={styles.logoutDoor} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -245,6 +264,54 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  logoutIconButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutArrow: {
+    position: 'absolute',
+    left: 0,
+  },
+  arrowLine: {
+    width: 12,
+    height: 2,
+    backgroundColor: 'white',
+    position: 'absolute',
+    left: 0,
+    top: 11,
+  },
+  arrowHead: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 4,
+    borderTopColor: 'transparent',
+    borderBottomWidth: 4,
+    borderBottomColor: 'transparent',
+    borderLeftWidth: 5,
+    borderLeftColor: 'white',
+    position: 'absolute',
+    left: 0,
+    top: 8,
+  },
+  logoutDoor: {
+    width: 10,
+    height: 16,
+    borderWidth: 2,
+    borderColor: 'white',
+    borderRadius: 2,
+    position: 'absolute',
+    right: 0,
   },
   content: {
     flex: 1,
