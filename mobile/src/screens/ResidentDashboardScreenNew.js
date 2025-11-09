@@ -196,7 +196,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               >
                 <Text style={styles.cardIcon}>📋</Text>
                 <Text style={styles.cardTitle}>My Reports</Text>
-                <Text style={styles.cardSubtitle}>View submissions ({emergencies.length})</Text>
+                <Text style={styles.cardSubtitle}>Active reports ({emergencies.filter(e => e.status !== 'resolved').length})</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
