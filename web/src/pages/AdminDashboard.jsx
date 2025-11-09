@@ -195,8 +195,10 @@ const AdminDashboard = () => {
   }
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout()
+      navigate('/login')
+    }
   }
 
   return (
