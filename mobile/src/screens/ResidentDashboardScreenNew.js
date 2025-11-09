@@ -278,7 +278,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
           style={styles.modalOverlay}
         >
           <ScrollView 
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={styles.modalScrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -367,7 +367,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
                 <Text style={styles.submitButtonText}>Submit Report</Text>
               </TouchableOpacity>
             </View>
-            </View>
+          </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
@@ -607,15 +607,19 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 24,
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 500,
   },
   modalTitle: {
     fontSize: 24,
