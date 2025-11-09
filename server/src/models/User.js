@@ -13,14 +13,35 @@ const UserSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  phoneNumber: {
+    type: String,
+    required: true,
+    unique: true
+  },
   password: {
     type: String,
     required: true
   },
   role: {
     type: String,
-    enum: ['admin', 'resident'],
+    enum: ['admin', 'resident', 'responder'],
     default: 'resident'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  // Responder specific fields
+  responderDetails: {
+    specialization: {
+      type: String,
+      enum: ['fire', 'medical', 'police', 'rescue', 'general']
+    },
+    availability: {
+      type: String,
+      enum: ['available', 'busy', 'offline'],
+      default: 'available'
+    }
   },
   createdAt: {
     type: Date,
