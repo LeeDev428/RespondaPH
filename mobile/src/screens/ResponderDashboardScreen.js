@@ -7,7 +7,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  RefreshControl
+  RefreshControl,
+  Modal,
+  TextInput
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -126,6 +128,24 @@ const ResponderDashboardScreen = ({ onLogout }) => {
     fetchEmergencies();
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: onLogout
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -133,7 +153,7 @@ const ResponderDashboardScreen = ({ onLogout }) => {
           <Text style={styles.headerTitle}>Responder Dashboard</Text>
           <Text style={styles.headerSubtitle}>Welcome, {user?.name}!</Text>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
