@@ -15,7 +15,7 @@ const AnnouncementDetailModal = ({
   onClose, 
   announcement 
 }) => {
-  if (!announcement) return null;
+
 
   return (
     <Modal
@@ -35,29 +35,38 @@ const AnnouncementDetailModal = ({
 
           <ScrollView 
             style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
             showsVerticalScrollIndicator={true}
           >
-            <View style={styles.announcementDetailHeader}>
-              <Text style={styles.announcementDetailTitle}>{announcement.title}</Text>
-              <View style={styles.announcementTypeBadge}>
-                <Text style={styles.announcementTypeBadgeText}>{announcement.type}</Text>
+            {!announcement ? (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailText}>Loading announcement...</Text>
               </View>
-            </View>
+            ) : (
+              <>
+                <View style={styles.announcementDetailHeader}>
+                  <Text style={styles.announcementDetailTitle}>{announcement.title || 'No Title'}</Text>
+                  <View style={styles.announcementTypeBadge}>
+                    <Text style={styles.announcementTypeBadgeText}>{announcement.type || 'general'}</Text>
+                  </View>
+                </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.announcementDetailMessage}>{announcement.message}</Text>
-            </View>
+                <View style={styles.detailSection}>
+                  <Text style={styles.announcementDetailMessage}>{announcement.message || 'No message content'}</Text>
+                </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.detailText}>
-                📅 Posted: {new Date(announcement.createdAt).toLocaleString()}
-              </Text>
-              {announcement.createdBy && (
-                <Text style={styles.detailText}>
-                  👤 By: {announcement.createdBy.name || 'Admin'}
-                </Text>
-              )}
-            </View>
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailText}>
+                    📅 Posted: {announcement.createdAt ? new Date(announcement.createdAt).toLocaleString() : 'N/A'}
+                  </Text>
+                  {announcement.createdBy && (
+                    <Text style={styles.detailText}>
+                      👤 By: {announcement.createdBy.name || 'Admin'}
+                    </Text>
+                  )}
+                </View>
+              </>
+            )}
           </ScrollView>
 
           <TouchableOpacity
@@ -85,12 +94,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 16,
     width: '100%',
-    maxHeight: '100%',
+    maxHeight: '90%',
     padding: 20,
   },
   scrollView: {
-    flex: 1,
+    maxHeight: 500,
     marginBottom: 10,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 10,
   },
   detailModalHeader: {
     flexDirection: 'row',
