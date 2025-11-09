@@ -1,12 +1,198 @@
-import { useContext } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import axios from 'axios'
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext)
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [emergencies, setEmergencies] = useState([])
+  const [responders, setResponders] = useState([])
+  const [stats, setStats] = useState({})
+  const [announcements, setAnnouncements] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [selectedResponders, setSelectedResponders] = useState([])
+  const [dispatchEmergencyId, setDispatchEmergencyId] = useState(null)
+  
+  // Forms state
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: '',
+    message: '',
+    type: 'general',
+    priority: 'medium'
+  })
+  const [newResponder, setNewResponder] = useState({
+    name: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    specialization: 'general'
+  })
+
+  useEffect(() => {
+    fetchData()
+  }, [activeTab])
+
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const config = { headers: { Authorization: `Bearer ${token}` } }
+      
+      if (activeTab === 'dashboard' || activeTab === 'emergencies') {
+        const [emergenciesRes, statsRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/emergencies', config),
+          axios.get('http://localhost:5000/api/emergencies/stats/dashboard', config)
+        ])
+        setEmergencies(emergenciesRes.data)
+        setStats(statsRes.data)
+      }
+      
+      if (activeTab === 'responders' || activeTab === 'emergencies') {
+        const res = await axios.get('http://localhost:5000/api/responders', config)
+        setResponders(res.data)
+      }
+      
+      if (activeTab === 'announcements') {
+        const res = await axios.get('http://localhost:5000/api/announcements', config)
+        setAnnouncements(res.data)
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      alert(error.response?.data?.message || 'Error fetching data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDispatchResponders = async (emergencyId) => {
+    if (selectedResponders.length === 0) {
+      alert('Please select at least one responder')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      await axios.put(
+        `http://localhost:5000/api/emergencies/${emergencyId}`,
+        { 
+          assignedResponders: selectedResponders,
+          status: 'dispatched'
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Responders dispatched successfully!')
+      setSelectedResponders([])
+      setDispatchEmergencyId(null)
+      fetchData()
+    } catch (error) {
+      console.error('Error dispatching responders:', error)
+      alert(error.response?.data?.message || 'Failed to dispatch responders')
+    }
+  }
+
+  const handleCreateAnnouncement = async (e) => {
+    e.preventDefault()
+    if (!newAnnouncement.title || !newAnnouncement.message) {
+      alert('Please fill in title and message')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      await axios.post(
+        'http://localhost:5000/api/announcements',
+        newAnnouncement,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Announcement created successfully!')
+      setNewAnnouncement({ title: '', message: '', type: 'general', priority: 'medium' })
+      fetchData()
+    } catch (error) {
+      console.error('Error creating announcement:', error)
+      alert(error.response?.data?.message || 'Failed to create announcement')
+    }
+  }
+
+  const handleCreateResponder = async (e) => {
+    e.preventDefault()
+    if (!newResponder.name || !newResponder.email || !newResponder.phoneNumber || !newResponder.password) {
+      alert('Please fill in all fields')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      await axios.post(
+        'http://localhost:5000/api/responders',
+        newResponder,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Responder created successfully!')
+      setNewResponder({ name: '', email: '', phoneNumber: '', password: '', specialization: 'general' })
+      fetchData()
+    } catch (error) {
+      console.error('Error creating responder:', error)
+      alert(error.response?.data?.message || 'Failed to create responder')
+    }
+  }
+
+  const handleToggleResponder = async (responderId, currentStatus) => {
+    try {
+      const token = localStorage.getItem('token')
+      await axios.put(
+        `http://localhost:5000/api/responders/${responderId}`,
+        { isActive: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Responder status updated!')
+      fetchData()
+    } catch (error) {
+      console.error('Error updating responder:', error)
+      alert(error.response?.data?.message || 'Failed to update responder')
+    }
+  }
+
+  const handleDeleteAnnouncement = async (announcementId) => {
+    if (!confirm('Are you sure you want to delete this announcement?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      await axios.delete(
+        `http://localhost:5000/api/announcements/${announcementId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Announcement deleted!')
+      fetchData()
+    } catch (error) {
+      console.error('Error deleting announcement:', error)
+      alert(error.response?.data?.message || 'Failed to delete announcement')
+    }
+  }
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      dispatched: 'bg-blue-100 text-blue-800',
+      responding: 'bg-purple-100 text-purple-800',
+      resolved: 'bg-green-100 text-green-800',
+      cancelled: 'bg-gray-100 text-gray-800'
+    }
+    return colors[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getPriorityColor = (priority) => {
+    const colors = {
+      low: 'bg-gray-100 text-gray-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      high: 'bg-orange-100 text-orange-800',
+      critical: 'bg-red-100 text-red-800'
+    }
+    return colors[priority] || 'bg-gray-100 text-gray-800'
+  }
 
   const handleLogout = () => {
     logout()
@@ -23,30 +209,38 @@ const AdminDashboard = () => {
           <div className="p-6">
             <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
             <nav className="space-y-2">
-              <a
-                href="#"
-                className="block px-4 py-3 bg-lgu-green-700 rounded-lg hover:bg-lgu-green-600 transition"
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                  activeTab === 'dashboard' ? 'bg-lgu-green-700' : 'hover:bg-lgu-green-700'
+                }`}
               >
                 📊 Dashboard
-              </a>
-              <a
-                href="#"
-                className="block px-4 py-3 rounded-lg hover:bg-lgu-green-700 transition"
+              </button>
+              <button
+                onClick={() => setActiveTab('emergencies')}
+                className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                  activeTab === 'emergencies' ? 'bg-lgu-green-700' : 'hover:bg-lgu-green-700'
+                }`}
               >
-                📋 Reports
-              </a>
-              <a
-                href="#"
-                className="block px-4 py-3 rounded-lg hover:bg-lgu-green-700 transition"
+                🚨 Emergencies
+              </button>
+              <button
+                onClick={() => setActiveTab('responders')}
+                className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                  activeTab === 'responders' ? 'bg-lgu-green-700' : 'hover:bg-lgu-green-700'
+                }`}
               >
-                👥 Residents
-              </a>
-              <a
-                href="#"
-                className="block px-4 py-3 rounded-lg hover:bg-lgu-green-700 transition"
+                👨‍🚒 Responders
+              </button>
+              <button
+                onClick={() => setActiveTab('announcements')}
+                className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                  activeTab === 'announcements' ? 'bg-lgu-green-700' : 'hover:bg-lgu-green-700'
+                }`}
               >
-                ⚠️ Emergencies
-              </a>
+                📢 Announcements
+              </button>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-600 transition mt-4"
@@ -58,7 +252,7 @@ const AdminDashboard = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-grow p-8">
+        <main className="flex-grow p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Admin Dashboard
@@ -67,40 +261,390 @@ const AdminDashboard = () => {
               Welcome back, {user?.name}!
             </p>
 
-            {/* Stats Cards */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-2">📊</div>
-                <h3 className="text-gray-600 text-sm font-medium">Total Reports</h3>
-                <p className="text-3xl font-bold text-lgu-green-600">0</p>
-              </div>
+            {/* Dashboard Tab */}
+            {activeTab === 'dashboard' && (
+              <>
+                {/* Stats Cards */}
+                <div className="grid md:grid-cols-4 gap-6 mb-8">
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="text-3xl mb-2">📊</div>
+                    <h3 className="text-gray-600 text-sm font-medium">Total Emergencies</h3>
+                    <p className="text-3xl font-bold text-lgu-green-600">{stats.total || 0}</p>
+                  </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-2">👥</div>
-                <h3 className="text-gray-600 text-sm font-medium">Registered Residents</h3>
-                <p className="text-3xl font-bold text-lgu-green-600">0</p>
-              </div>
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="text-3xl mb-2">⏳</div>
+                    <h3 className="text-gray-600 text-sm font-medium">Pending</h3>
+                    <p className="text-3xl font-bold text-yellow-600">{stats.pending || 0}</p>
+                  </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-2">⚠️</div>
-                <h3 className="text-gray-600 text-sm font-medium">Active Emergencies</h3>
-                <p className="text-3xl font-bold text-red-600">0</p>
-              </div>
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="text-3xl mb-2">🚨</div>
+                    <h3 className="text-gray-600 text-sm font-medium">Active</h3>
+                    <p className="text-3xl font-bold text-red-600">{stats.active || 0}</p>
+                  </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-2">✅</div>
-                <h3 className="text-gray-600 text-sm font-medium">Resolved Today</h3>
-                <p className="text-3xl font-bold text-green-600">0</p>
-              </div>
-            </div>
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="text-3xl mb-2">✅</div>
+                    <h3 className="text-gray-600 text-sm font-medium">Resolved</h3>
+                    <p className="text-3xl font-bold text-green-600">{stats.resolved || 0}</p>
+                  </div>
+                </div>
 
-            {/* Recent Reports Table */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Reports</h2>
-              <div className="text-center py-12 text-gray-500">
-                No reports yet. Reports will appear here once residents start reporting incidents.
+                {/* Recent Emergencies */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Emergencies</h2>
+                  {loading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : emergencies.length === 0 ? (
+                    <p className="text-center py-12 text-gray-500">No emergencies yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {emergencies.slice(0, 5).map((emergency) => (
+                        <div key={emergency._id} className="border rounded-lg p-4 hover:shadow-md transition">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-bold text-lg">{emergency.type.toUpperCase()}</h3>
+                              <p className="text-gray-600 text-sm">By: {emergency.reportedBy?.name}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(emergency.status)}`}>
+                                {emergency.status}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(emergency.priority)}`}>
+                                {emergency.priority}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-gray-700 mb-2">{emergency.description}</p>
+                          <p className="text-sm text-gray-500">📍 {emergency.location.address}</p>
+                          <p className="text-sm text-gray-500">⏰ {new Date(emergency.createdAt).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Emergencies Tab */}
+            {activeTab === 'emergencies' && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Emergency Management</h2>
+                {loading ? (
+                  <p className="text-center py-8 text-gray-500">Loading...</p>
+                ) : emergencies.length === 0 ? (
+                  <p className="text-center py-12 text-gray-500">No emergencies reported yet</p>
+                ) : (
+                  <div className="space-y-6">
+                    {emergencies.map((emergency) => (
+                      <div key={emergency._id} className="border rounded-lg p-6 hover:shadow-lg transition">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-bold text-xl text-gray-900">{emergency.type.toUpperCase()}</h3>
+                            <p className="text-gray-600">Reported by: {emergency.reportedBy?.name}</p>
+                            <p className="text-gray-600">Contact: {emergency.contactNumber}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(emergency.status)}`}>
+                              {emergency.status}
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getPriorityColor(emergency.priority)}`}>
+                              {emergency.priority}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-700 mb-3">{emergency.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">📍 Location: {emergency.location.address}</p>
+                        <p className="text-sm text-gray-600 mb-4">⏰ {new Date(emergency.createdAt).toLocaleString()}</p>
+
+                        {emergency.assignedResponders?.length > 0 && (
+                          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                            <p className="font-semibold text-blue-900 mb-1">Assigned Responders:</p>
+                            <p className="text-blue-700">
+                              {emergency.assignedResponders.map(r => r.name).join(', ')}
+                            </p>
+                          </div>
+                        )}
+
+                        {emergency.status === 'pending' && (
+                          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <h4 className="font-semibold mb-3">Dispatch Responders</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                              {responders.filter(r => r.isActive).map((responder) => (
+                                <label key={responder._id} className="flex items-center space-x-2 p-2 border rounded hover:bg-white cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedResponders.includes(responder._id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedResponders([...selectedResponders, responder._id])
+                                      } else {
+                                        setSelectedResponders(selectedResponders.filter(id => id !== responder._id))
+                                      }
+                                    }}
+                                    className="form-checkbox"
+                                  />
+                                  <span className="text-sm">{responder.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <button
+                              onClick={() => handleDispatchResponders(emergency._id)}
+                              className="bg-lgu-green-600 text-white px-4 py-2 rounded-lg hover:bg-lgu-green-700 transition"
+                            >
+                              Dispatch Selected Responders
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Responders Tab */}
+            {activeTab === 'responders' && (
+              <div>
+                {/* Add Responder Form */}
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Add New Responder</h2>
+                  <form onSubmit={handleCreateResponder} className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                      <input
+                        type="text"
+                        value={newResponder.name}
+                        onChange={(e) => setNewResponder({ ...newResponder, name: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <input
+                        type="email"
+                        value={newResponder.email}
+                        onChange={(e) => setNewResponder({ ...newResponder, email: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                      <input
+                        type="tel"
+                        value={newResponder.phoneNumber}
+                        onChange={(e) => setNewResponder({ ...newResponder, phoneNumber: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                      <input
+                        type="password"
+                        value={newResponder.password}
+                        onChange={(e) => setNewResponder({ ...newResponder, password: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                      <select
+                        value={newResponder.specialization}
+                        onChange={(e) => setNewResponder({ ...newResponder, specialization: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                      >
+                        <option value="general">General</option>
+                        <option value="medical">Medical</option>
+                        <option value="fire">Fire</option>
+                        <option value="police">Police</option>
+                        <option value="rescue">Rescue</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="submit"
+                        className="w-full bg-lgu-green-600 text-white py-2 px-4 rounded-lg hover:bg-lgu-green-700 transition font-semibold"
+                      >
+                        Add Responder
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Responders List */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Responders List</h2>
+                  {loading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : responders.length === 0 ? (
+                    <p className="text-center py-12 text-gray-500">No responders yet</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialization</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {responders.map((responder) => (
+                            <tr key={responder._id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{responder.name}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">
+                                <div>{responder.email}</div>
+                                <div>{responder.phoneNumber}</div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-600">
+                                {responder.responderDetails?.specialization || 'General'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                  responder.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {responder.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => handleToggleResponder(responder._id, responder.isActive)}
+                                  className={`px-3 py-1 rounded text-xs font-semibold ${
+                                    responder.isActive 
+                                      ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                      : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                  }`}
+                                >
+                                  {responder.isActive ? 'Deactivate' : 'Activate'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Announcements Tab */}
+            {activeTab === 'announcements' && (
+              <div>
+                {/* Create Announcement Form */}
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Create Announcement</h2>
+                  <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                      <input
+                        type="text"
+                        value={newAnnouncement.title}
+                        onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
+                      <textarea
+                        value={newAnnouncement.message}
+                        onChange={(e) => setNewAnnouncement({ ...newAnnouncement, message: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        rows="4"
+                        required
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select
+                          value={newAnnouncement.type}
+                          onChange={(e) => setNewAnnouncement({ ...newAnnouncement, type: e.target.value })}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        >
+                          <option value="general">General</option>
+                          <option value="emergency">Emergency</option>
+                          <option value="maintenance">Maintenance</option>
+                          <option value="event">Event</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <select
+                          value={newAnnouncement.priority}
+                          onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value })}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-lgu-green-600 text-white py-3 px-4 rounded-lg hover:bg-lgu-green-700 transition font-semibold"
+                    >
+                      Create Announcement
+                    </button>
+                  </form>
+                </div>
+
+                {/* Announcements List */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">All Announcements</h2>
+                  {loading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : announcements.length === 0 ? (
+                    <p className="text-center py-12 text-gray-500">No announcements yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {announcements.map((announcement) => (
+                        <div key={announcement._id} className="border rounded-lg p-4 hover:shadow-md transition">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-lg">{announcement.title}</h3>
+                            <div className="flex gap-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                announcement.type === 'emergency' ? 'bg-red-100 text-red-800' :
+                                announcement.type === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                {announcement.type}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(announcement.priority)}`}>
+                                {announcement.priority}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-gray-700 mb-2">{announcement.message}</p>
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm text-gray-500">
+                              Created: {new Date(announcement.createdAt).toLocaleString()}
+                            </p>
+                            <button
+                              onClick={() => handleDeleteAnnouncement(announcement._id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
