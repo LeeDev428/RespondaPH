@@ -16,7 +16,7 @@ const EmergencyDetailModal = ({
   emergency,
   getStatusColor 
 }) => {
-  if (!emergency) return null;
+
 
   return (
     <Modal
@@ -36,80 +36,87 @@ const EmergencyDetailModal = ({
           
           <ScrollView 
             style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
             showsVerticalScrollIndicator={true}
           >
-
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Type:</Text>
-                <Text style={styles.detailValue}>{emergency.type.toUpperCase()}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Status:</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(emergency.status) }]}>
-                  <Text style={styles.statusText}>{emergency.status}</Text>
-                </View>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Priority:</Text>
-                <Text style={[styles.detailValue, styles.priorityText]}>{emergency.priority.toUpperCase()}</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Description</Text>
-              <Text style={styles.detailText}>{emergency.description}</Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Location</Text>
-              <Text style={styles.detailText}>📍 {emergency.location.address}</Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Contact</Text>
-              <Text style={styles.detailText}>📞 {emergency.contactNumber}</Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Timeline</Text>
-              <Text style={styles.detailText}>⏰ Reported: {new Date(emergency.createdAt).toLocaleString()}</Text>
-              {emergency.resolvedAt && (
-                <Text style={styles.detailText}>✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}</Text>
-              )}
-            </View>
-
-            {emergency.assignedResponders?.length > 0 && (
+            {!emergency ? (
               <View style={styles.detailSection}>
-                <Text style={styles.detailSectionTitle}>Assigned Responders</Text>
-                {emergency.assignedResponders.map((responder, index) => (
-                  <Text key={index} style={styles.detailText}>
-                    👨‍🚒 {responder.name} - {responder.phoneNumber}
-                  </Text>
-                ))}
+                <Text style={styles.detailText}>Loading emergency data...</Text>
               </View>
-            )}
-
-            {emergency.updates && emergency.updates.length > 0 && (
-              <View style={styles.detailSection}>
-                <Text style={styles.detailSectionTitle}>Updates & Notes</Text>
-                {emergency.updates.map((update, index) => (
-                  <View key={index} style={styles.updateItem}>
-                    <Text style={styles.updateBy}>
-                      {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
-                    </Text>
-                    <Text style={styles.updateTime}>
-                      {new Date(update.timestamp).toLocaleString()}
-                    </Text>
-                    <Text style={styles.updateStatus}>Status: {update.status}</Text>
-                    {update.notes && (
-                      <Text style={styles.updateNotes}>📝 {update.notes}</Text>
-                    )}
+            ) : (
+              <>
+                <View style={styles.detailSection}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Type:</Text>
+                    <Text style={styles.detailValue}>{emergency.type?.toUpperCase() || 'N/A'}</Text>
                   </View>
-                ))}
-              </View>
-            )}
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Status:</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(emergency.status) }]}>
+                      <Text style={styles.statusText}>{emergency.status || 'N/A'}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Priority:</Text>
+                    <Text style={[styles.detailValue, styles.priorityText]}>{emergency.priority?.toUpperCase() || 'N/A'}</Text>
+                  </View>
+                </View>
 
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Description</Text>
+                  <Text style={styles.detailText}>{emergency.description || 'No description provided'}</Text>
+                </View>
+
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Location</Text>
+                  <Text style={styles.detailText}>📍 {emergency.location?.address || 'No location specified'}</Text>
+                </View>
+
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Contact</Text>
+                  <Text style={styles.detailText}>📞 {emergency.contactNumber || 'No contact provided'}</Text>
+                </View>
+
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Timeline</Text>
+                  <Text style={styles.detailText}>⏰ Reported: {emergency.createdAt ? new Date(emergency.createdAt).toLocaleString() : 'N/A'}</Text>
+                  {emergency.resolvedAt && (
+                    <Text style={styles.detailText}>✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}</Text>
+                  )}
+                </View>
+
+                {emergency.assignedResponders?.length > 0 && (
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Assigned Responders</Text>
+                    {emergency.assignedResponders.map((responder, index) => (
+                      <Text key={index} style={styles.detailText}>
+                        👨‍🚒 {responder.name} - {responder.phoneNumber}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+
+                {emergency.updates && emergency.updates.length > 0 && (
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Updates & Notes</Text>
+                    {emergency.updates.map((update, index) => (
+                      <View key={index} style={styles.updateItem}>
+                        <Text style={styles.updateBy}>
+                          {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
+                        </Text>
+                        <Text style={styles.updateTime}>
+                          {new Date(update.timestamp).toLocaleString()}
+                        </Text>
+                        <Text style={styles.updateStatus}>Status: {update.status}</Text>
+                        {update.notes && (
+                          <Text style={styles.updateNotes}>📝 {update.notes}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
           </ScrollView>
 
           <TouchableOpacity
@@ -137,12 +144,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 16,
     width: '100%',
-    maxHeight: '100%',
+    maxHeight: '90%',
     padding: 20,
   },
   scrollView: {
-    flex: 1,
+    maxHeight: 500,
     marginBottom: 10,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 10,
   },
   detailModalHeader: {
     flexDirection: 'row',
