@@ -502,9 +502,12 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         animationType="slide"
         onRequestClose={() => setShowEmergencyDetail(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.detailModalContent}>
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailModalScrollContent}>
               <View style={styles.detailModalHeader}>
                 <Text style={styles.detailModalTitle}>Emergency Details</Text>
                 <TouchableOpacity onPress={() => setShowEmergencyDetail(false)}>
@@ -597,7 +600,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Announcement Detail Modal */}
@@ -607,7 +610,10 @@ const ResidentDashboardScreen = ({ onLogout }) => {
         animationType="slide"
         onRequestClose={() => setShowAnnouncementDetail(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.detailModalContent}>
             <View style={styles.detailModalHeader}>
               <Text style={styles.detailModalTitle}>Announcement</Text>
@@ -649,7 +655,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               </>
             )}
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -943,6 +949,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalScrollContent: {
     flexGrow: 1,
@@ -1075,6 +1082,9 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '90%',
     maxHeight: '85%',
+  },
+  detailModalScrollContent: {
+    flexGrow: 1,
   },
   detailModalHeader: {
     flexDirection: 'row',
