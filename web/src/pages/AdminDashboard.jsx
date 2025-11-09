@@ -42,7 +42,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('token')
       const config = { headers: { Authorization: `Bearer ${token}` } }
       
-      if (activeTab === 'dashboard' || activeTab === 'emergencies') {
+      if (activeTab === 'dashboard' || activeTab === 'emergencies' || activeTab === 'history') {
         const [emergenciesRes, statsRes] = await Promise.all([
           axios.get('http://localhost:5000/api/emergencies', config),
           axios.get('http://localhost:5000/api/emergencies/stats/dashboard', config)
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
         setStats(statsRes.data)
       }
       
-      if (activeTab === 'responders' || activeTab === 'emergencies') {
+      if (activeTab === 'responders' || activeTab === 'emergencies' || activeTab === 'history') {
         const res = await axios.get('http://localhost:5000/api/responders', config)
         setResponders(res.data)
       }
@@ -244,6 +244,14 @@ const AdminDashboard = () => {
                 📢 Announcements
               </button>
               <button
+                onClick={() => setActiveTab('history')}
+                className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                  activeTab === 'history' ? 'bg-lgu-green-700' : 'hover:bg-lgu-green-700'
+                }`}
+              >
+                📖 History
+              </button>
+              <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-3 rounded-lg hover:bg-red-600 transition mt-4"
               >
@@ -332,14 +340,14 @@ const AdminDashboard = () => {
             {/* Emergencies Tab */}
             {activeTab === 'emergencies' && (
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Emergency Management</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Active Emergency Management</h2>
                 {loading ? (
                   <p className="text-center py-8 text-gray-500">Loading...</p>
-                ) : emergencies.length === 0 ? (
-                  <p className="text-center py-12 text-gray-500">No emergencies reported yet</p>
+                ) : emergencies.filter(e => e.status !== 'resolved').length === 0 ? (
+                  <p className="text-center py-12 text-gray-500">No active emergencies</p>
                 ) : (
                   <div className="space-y-6">
-                    {emergencies.map((emergency) => (
+                    {emergencies.filter(e => e.status !== 'resolved').map((emergency) => (
                       <div key={emergency._id} className="border rounded-lg p-6 hover:shadow-lg transition">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -667,6 +675,78 @@ const AdminDashboard = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* History Tab */}
+            {activeTab === 'history' && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Emergency History</h2>
+                {loading ? (
+                  <p className="text-center py-8 text-gray-500">Loading...</p>
+                ) : emergencies.filter(e => e.status === 'resolved').length === 0 ? (
+                  <p className="text-center py-12 text-gray-500">No resolved emergencies</p>
+                ) : (
+                  <div className="space-y-6">
+                    {emergencies.filter(e => e.status === 'resolved').map((emergency) => (
+                      <div key={emergency._id} className="border rounded-lg p-6 bg-gray-50">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-bold text-xl text-gray-900">{emergency.type.toUpperCase()}</h3>
+                            <p className="text-gray-600">Reported by: {emergency.reportedBy?.name}</p>
+                            <p className="text-gray-600">Contact: {emergency.contactNumber}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(emergency.status)}`}>
+                              {emergency.status}
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getPriorityColor(emergency.priority)}`}>
+                              {emergency.priority}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-700 mb-3">{emergency.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">📍 Location: {emergency.location.address}</p>
+                        <p className="text-sm text-gray-600 mb-2">⏰ Reported: {new Date(emergency.createdAt).toLocaleString()}</p>
+                        {emergency.resolvedAt && (
+                          <p className="text-sm text-green-600 mb-4">✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}</p>
+                        )}
+
+                        {emergency.assignedResponders?.length > 0 && (
+                          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                            <p className="font-semibold text-blue-900 mb-1">Assigned Responders:</p>
+                            <p className="text-blue-700">
+                              {emergency.assignedResponders.map(r => r.name).join(', ')}
+                            </p>
+                          </div>
+                        )}
+
+                        {emergency.updates && emergency.updates.length > 0 && (
+                          <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                            <p className="font-semibold text-green-900 mb-2">Updates & Notes:</p>
+                            {emergency.updates.map((update, index) => (
+                              <div key={index} className="mb-3 pb-3 border-b border-green-200 last:border-0 last:pb-0 last:mb-0">
+                                <div className="flex justify-between items-start mb-1">
+                                  <p className="text-sm font-semibold text-green-900">
+                                    {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
+                                  </p>
+                                  <p className="text-xs text-green-600">
+                                    {new Date(update.timestamp).toLocaleString()}
+                                  </p>
+                                </div>
+                                <p className="text-sm text-green-700 mb-1">Status: {update.status}</p>
+                                {update.notes && (
+                                  <p className="text-sm text-green-800 italic">📝 {update.notes}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
