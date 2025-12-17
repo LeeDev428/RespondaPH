@@ -459,7 +459,7 @@ const ResidentDashboardScreen = ({ onLogout }) => {
               keyboardType="phone-pad"
             />
 
-            <Text style={styles.label}>Priority</Text>
+            <Text style={styles.label}>Severity</Text>
             <View style={styles.priorityContainer}>
               {['low', 'medium', 'high', 'critical'].map((priority) => (
                 <TouchableOpacity
