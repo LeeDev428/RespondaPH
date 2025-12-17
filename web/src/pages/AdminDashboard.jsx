@@ -16,6 +16,11 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false)
   const [selectedResponders, setSelectedResponders] = useState([])
   const [dispatchEmergencyId, setDispatchEmergencyId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterType, setFilterType] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   
   // Forms state
   const [newAnnouncement, setNewAnnouncement] = useState({
@@ -274,43 +279,72 @@ const AdminDashboard = () => {
             {/* Dashboard Tab */}
             {activeTab === 'dashboard' && (
               <>
-                {/* Stats Cards */}
+                {/* Stats Cards - Clickable */}
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white p-6 rounded-lg shadow-md">
+                  <button 
+                    onClick={() => setActiveTab('emergencies')} 
+                    className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 text-left cursor-pointer"
+                  >
                     <div className="text-3xl mb-2">📊</div>
                     <h3 className="text-gray-600 text-sm font-medium">Total Emergencies</h3>
                     <p className="text-3xl font-bold text-lgu-green-600">{stats.total || 0}</p>
-                  </div>
+                  </button>
 
-                  <div className="bg-white p-6 rounded-lg shadow-md">
+                  <button 
+                    onClick={() => setActiveTab('emergencies')} 
+                    className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 text-left cursor-pointer"
+                  >
                     <div className="text-3xl mb-2">⏳</div>
                     <h3 className="text-gray-600 text-sm font-medium">Pending</h3>
                     <p className="text-3xl font-bold text-yellow-600">{stats.pending || 0}</p>
-                  </div>
+                  </button>
 
-                  <div className="bg-white p-6 rounded-lg shadow-md">
+                  <button 
+                    onClick={() => setActiveTab('emergencies')} 
+                    className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 text-left cursor-pointer"
+                  >
                     <div className="text-3xl mb-2">🚨</div>
                     <h3 className="text-gray-600 text-sm font-medium">Active</h3>
                     <p className="text-3xl font-bold text-red-600">{stats.active || 0}</p>
-                  </div>
+                  </button>
 
-                  <div className="bg-white p-6 rounded-lg shadow-md">
+                  <button 
+                    onClick={() => setActiveTab('history')} 
+                    className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 text-left cursor-pointer"
+                  >
                     <div className="text-3xl mb-2">✅</div>
                     <h3 className="text-gray-600 text-sm font-medium">Resolved</h3>
                     <p className="text-3xl font-bold text-green-600">{stats.resolved || 0}</p>
-                  </div>
+                  </button>
                 </div>
 
                 {/* Recent Emergencies */}
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Emergencies</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">Recent Emergencies</h2>
+                    <input
+                      type="text"
+                      placeholder="🔍 Search emergencies..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500 w-64"
+                    />
+                  </div>
                   {loading ? (
                     <p className="text-center py-8 text-gray-500">Loading...</p>
                   ) : emergencies.length === 0 ? (
                     <p className="text-center py-12 text-gray-500">No emergencies yet</p>
                   ) : (
                     <div className="space-y-4">
-                      {emergencies.slice(0, 5).map((emergency) => (
+                      {emergencies
+                        .filter(e => 
+                          e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          e.reportedBy?.name.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                        .slice(0, 5)
+                        .map((emergency) => (
                         <div key={emergency._id} className="border rounded-lg p-4 hover:shadow-md transition">
                           <div className="flex justify-between items-start mb-2">
                             <div>
@@ -340,14 +374,120 @@ const AdminDashboard = () => {
             {/* Emergencies Tab */}
             {activeTab === 'emergencies' && (
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Active Emergency Management</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Emergency Management</h2>
+                
+                {/* Search and Filter Controls */}
+                <div className="mb-6 space-y-4">
+                  <div className="flex flex-wrap gap-4">
+                    <input
+                      type="text"
+                      placeholder="🔍 Search by type, description, or reporter..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 min-w-[250px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                    />
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="dispatched">Dispatched</option>
+                      <option value="responding">Responding</option>
+                    </select>
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="fire">Fire</option>
+                      <option value="flood">Flood</option>
+                      <option value="medical">Medical</option>
+                      <option value="accident">Accident</option>
+                      <option value="crime">Crime</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  
+                  {/* Date Range Picker */}
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <label className="text-sm font-medium text-gray-700">📅 Date Range:</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                      placeholder="Start Date"
+                    />
+                    <span className="text-gray-500">to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                      placeholder="End Date"
+                    />
+                    {(startDate || endDate) && (
+                      <button
+                        onClick={() => {
+                          setStartDate('')
+                          setEndDate('')
+                        }}
+                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                      >
+                        Clear Dates
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
                 {loading ? (
                   <p className="text-center py-8 text-gray-500">Loading...</p>
-                ) : emergencies.filter(e => e.status !== 'resolved').length === 0 ? (
-                  <p className="text-center py-12 text-gray-500">No active emergencies</p>
+                ) : emergencies
+                    .filter(e => e.status !== 'resolved')
+                    .filter(e => {
+                      // Apply all filters
+                      const matchesStatus = filterStatus === 'all' || e.status === filterStatus
+                      const matchesType = filterType === 'all' || e.type === filterType
+                      const matchesSearch = searchQuery === '' || 
+                        e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        e.reportedBy?.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      
+                      // Date range filter
+                      const emergencyDate = new Date(e.createdAt)
+                      const matchesStartDate = !startDate || emergencyDate >= new Date(startDate)
+                      const matchesEndDate = !endDate || emergencyDate <= new Date(endDate + 'T23:59:59')
+                      
+                      return matchesStatus && matchesType && matchesSearch && matchesStartDate && matchesEndDate
+                    })
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                    .length === 0 ? (
+                  <p className="text-center py-12 text-gray-500">No matching emergencies found</p>
                 ) : (
                   <div className="space-y-6">
-                    {emergencies.filter(e => e.status !== 'resolved').map((emergency) => (
+                    {emergencies
+                      .filter(e => e.status !== 'resolved')
+                      .filter(e => {
+                        // Apply all filters
+                        const matchesStatus = filterStatus === 'all' || e.status === filterStatus
+                        const matchesType = filterType === 'all' || e.type === filterType
+                        const matchesSearch = searchQuery === '' || 
+                          e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          e.reportedBy?.name.toLowerCase().includes(searchQuery.toLowerCase())
+                        
+                        // Date range filter
+                        const emergencyDate = new Date(e.createdAt)
+                        const matchesStartDate = !startDate || emergencyDate >= new Date(startDate)
+                        const matchesEndDate = !endDate || emergencyDate <= new Date(endDate + 'T23:59:59')
+                        
+                        return matchesStatus && matchesType && matchesSearch && matchesStartDate && matchesEndDate
+                      })
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .map((emergency) => (
                       <div key={emergency._id} className="border rounded-lg p-6 hover:shadow-lg transition">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -404,23 +544,39 @@ const AdminDashboard = () => {
                           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                             <h4 className="font-semibold mb-3">Dispatch Responders</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                              {responders.filter(r => r.isActive).map((responder) => (
-                                <label key={responder._id} className="flex items-center space-x-2 p-2 border rounded hover:bg-white cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedResponders.includes(responder._id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedResponders([...selectedResponders, responder._id])
-                                      } else {
-                                        setSelectedResponders(selectedResponders.filter(id => id !== responder._id))
-                                      }
-                                    }}
-                                    className="form-checkbox"
-                                  />
-                                  <span className="text-sm">{responder.name}</span>
-                                </label>
-                              ))}
+                              {responders.filter(r => r.isActive).map((responder) => {
+                                const availability = responder.responderDetails?.availability || 'offline'
+                                const availabilityColors = {
+                                  available: 'bg-green-100 border-green-300',
+                                  busy: 'bg-yellow-100 border-yellow-300',
+                                  offline: 'bg-gray-100 border-gray-300'
+                                }
+                                const availabilityDots = {
+                                  available: '🟢',
+                                  busy: '🟡',
+                                  offline: '⚪'
+                                }
+                                return (
+                                  <label key={responder._id} className={`flex items-center space-x-2 p-2 border-2 rounded hover:shadow-md cursor-pointer ${availabilityColors[availability]}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedResponders.includes(responder._id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedResponders([...selectedResponders, responder._id])
+                                        } else {
+                                          setSelectedResponders(selectedResponders.filter(id => id !== responder._id))
+                                        }
+                                      }}
+                                      className="form-checkbox"
+                                    />
+                                    <div className="flex-1">
+                                      <span className="text-sm font-medium block">{responder.name}</span>
+                                      <span className="text-xs text-gray-600">{availabilityDots[availability]} {availability}</span>
+                                    </div>
+                                  </label>
+                                )
+                              })}
                             </div>
                             <button
                               onClick={() => handleDispatchResponders(emergency._id)}
