@@ -57,7 +57,7 @@ const EmergencyDetailModal = ({
                     </View>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Priority:</Text>
+                    <Text style={styles.detailLabel}>Severity:</Text>
                     <Text style={[styles.detailValue, styles.priorityText]}>{emergency.priority?.toUpperCase() || 'N/A'}</Text>
                   </View>
                 </View>
