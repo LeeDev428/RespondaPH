@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import axios from 'axios'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 const AdminDashboard = () => {
   const { user, logout } = useContext(AuthContext)
@@ -21,6 +22,12 @@ const AdminDashboard = () => {
   const [filterType, setFilterType] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  
+  // History filters
+  const [historyFilterType, setHistoryFilterType] = useState('all')
+  const [historyStartDate, setHistoryStartDate] = useState('')
+  const [historyEndDate, setHistoryEndDate] = useState('')
+  const [historySortBy, setHistorySortBy] = useState('resolvedDate')
   
   // Forms state
   const [newAnnouncement, setNewAnnouncement] = useState({
@@ -198,6 +205,74 @@ const AdminDashboard = () => {
     }
     return colors[priority] || 'bg-gray-100 text-gray-800'
   }
+
+  // Analytics data calculations
+  const getAnalyticsData = () => {
+    const resolvedEmergencies = emergencies.filter(e => e.status === 'resolved')
+    
+    // Emergency types distribution
+    const typeDistribution = resolvedEmergencies.reduce((acc, e) => {
+      acc[e.type] = (acc[e.type] || 0) + 1
+      return acc
+    }, {})
+    
+    const typeChartData = Object.entries(typeDistribution).map(([type, count]) => ({
+      type: type.charAt(0).toUpperCase() + type.slice(1),
+      count
+    }))
+    
+    // Monthly trend (last 6 months)
+    const monthlyData = {}
+    const now = new Date()
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthKey = month.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+      monthlyData[monthKey] = 0
+    }
+    
+    resolvedEmergencies.forEach(e => {
+      const date = new Date(e.resolvedAt || e.createdAt)
+      const monthKey = date.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+      if (monthlyData.hasOwnProperty(monthKey)) {
+        monthlyData[monthKey]++
+      }
+    })
+    
+    const monthlyChartData = Object.entries(monthlyData).map(([month, count]) => ({
+      month,
+      count
+    }))
+    
+    // Responder statistics
+    const responderStats = {}
+    resolvedEmergencies.forEach(e => {
+      if (e.assignedResponders && e.assignedResponders.length > 0) {
+        e.assignedResponders.forEach(r => {
+          if (!responderStats[r._id]) {
+            responderStats[r._id] = {
+              name: r.name,
+              count: 0,
+              specialization: r.responderDetails?.specialization || 'general'
+            }
+          }
+          responderStats[r._id].count++
+        })
+      }
+    })
+    
+    const topResponders = Object.values(responderStats)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map(r => ({
+        name: r.name,
+        resolved: r.count,
+        specialization: r.specialization
+      }))
+    
+    return { typeChartData, monthlyChartData, topResponders }
+  }
+
+  const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to log out?')) {
@@ -867,15 +942,217 @@ const AdminDashboard = () => {
 
             {/* History Tab */}
             {activeTab === 'history' && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Emergency History</h2>
-                {loading ? (
-                  <p className="text-center py-8 text-gray-500">Loading...</p>
-                ) : emergencies.filter(e => e.status === 'resolved').length === 0 ? (
-                  <p className="text-center py-12 text-gray-500">No resolved emergencies</p>
-                ) : (
+              <>
+                {/* Analytics Section */}
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">📊 Emergency Analytics</h2>
+                  
+                  {emergencies.filter(e => e.status === 'resolved').length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No resolved emergencies to analyze yet
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {/* Emergency Type Distribution */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Emergency Types Distribution</h3>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                              <Pie
+                                data={getAnalyticsData().typeChartData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ type, count }) => `${type}: ${count}`}
+                                outerRadius={100}
+                                fill="#8884d8"
+                                dataKey="count"
+                              >
+                                {getAnalyticsData().typeChartData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          
+                          <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={getAnalyticsData().typeChartData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="type" />
+                              <YAxis />
+                              <Tooltip />
+                              <Legend />
+                              <Bar dataKey="count" fill="#10b981" name="Cases" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* Monthly Trend */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Resolved Emergencies (Last 6 Months)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={getAnalyticsData().monthlyChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} name="Resolved Cases" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Top Responders */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🚒 Top Responders</h3>
+                        {getAnalyticsData().topResponders.length === 0 ? (
+                          <p className="text-gray-500 text-center py-4">No responder data available</p>
+                        ) : (
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <ResponsiveContainer width="100%" height={300}>
+                              <BarChart data={getAnalyticsData().topResponders} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" />
+                                <YAxis dataKey="name" type="category" width={100} />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="resolved" fill="#8b5cf6" name="Cases Resolved" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                            
+                            <div className="space-y-3">
+                              {getAnalyticsData().topResponders.map((responder, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
+                                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                                    }`}>
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900">{responder.name}</p>
+                                      <p className="text-xs text-gray-600">{responder.specialization}</p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-2xl font-bold text-purple-600">{responder.resolved}</p>
+                                    <p className="text-xs text-gray-500">resolved</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* History List with Filters */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Emergency History</h2>
+                  
+                  {/* Filter Controls */}
+                  <div className="mb-6 space-y-4">
+                    <div className="flex flex-wrap gap-4">
+                      <select
+                        value={historyFilterType}
+                        onChange={(e) => setHistoryFilterType(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                      >
+                        <option value="all">All Types</option>
+                        <option value="fire">Fire</option>
+                        <option value="flood">Flood</option>
+                        <option value="medical">Medical</option>
+                        <option value="accident">Accident</option>
+                        <option value="crime">Crime</option>
+                        <option value="other">Other</option>
+                      </select>
+                      
+                      <select
+                        value={historySortBy}
+                        onChange={(e) => setHistorySortBy(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                      >
+                        <option value="resolvedDate">Sort by Resolved Date (Newest)</option>
+                        <option value="resolvedDateOld">Sort by Resolved Date (Oldest)</option>
+                        <option value="createdDate">Sort by Created Date (Newest)</option>
+                        <option value="createdDateOld">Sort by Created Date (Oldest)</option>
+                        <option value="type">Sort by Type</option>
+                      </select>
+                    </div>
+                    
+                    {/* Date Range Picker */}
+                    <div className="flex flex-wrap gap-4 items-center">
+                      <label className="text-sm font-medium text-gray-700">📅 Date Range:</label>
+                      <input
+                        type="date"
+                        value={historyStartDate}
+                        onChange={(e) => setHistoryStartDate(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        placeholder="Start Date"
+                      />
+                      <span className="text-gray-500">to</span>
+                      <input
+                        type="date"
+                        value={historyEndDate}
+                        onChange={(e) => setHistoryEndDate(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lgu-green-500"
+                        placeholder="End Date"
+                      />
+                      {(historyStartDate || historyEndDate) && (
+                        <button
+                          onClick={() => {
+                            setHistoryStartDate('')
+                            setHistoryEndDate('')
+                          }}
+                          className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                        >
+                          Clear Dates
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {loading ? (
+                    <p className="text-center py-8 text-gray-500">Loading...</p>
+                  ) : emergencies.filter(e => e.status === 'resolved').length === 0 ? (
+                    <p className="text-center py-12 text-gray-500">No resolved emergencies</p>
+                  ) : (
                   <div className="space-y-6">
-                    {emergencies.filter(e => e.status === 'resolved').map((emergency) => (
+                    {emergencies
+                      .filter(e => e.status === 'resolved')
+                      .filter(e => {
+                        // Type filter
+                        const matchesType = historyFilterType === 'all' || e.type === historyFilterType
+                        
+                        // Date range filter
+                        const resolvedDate = new Date(e.resolvedAt || e.createdAt)
+                        const matchesStartDate = !historyStartDate || resolvedDate >= new Date(historyStartDate)
+                        const matchesEndDate = !historyEndDate || resolvedDate <= new Date(historyEndDate + 'T23:59:59')
+                        
+                        return matchesType && matchesStartDate && matchesEndDate
+                      })
+                      .sort((a, b) => {
+                        switch(historySortBy) {
+                          case 'resolvedDate':
+                            return new Date(b.resolvedAt || b.createdAt) - new Date(a.resolvedAt || a.createdAt)
+                          case 'resolvedDateOld':
+                            return new Date(a.resolvedAt || a.createdAt) - new Date(b.resolvedAt || b.createdAt)
+                          case 'createdDate':
+                            return new Date(b.createdAt) - new Date(a.createdAt)
+                          case 'createdDateOld':
+                            return new Date(a.createdAt) - new Date(b.createdAt)
+                          case 'type':
+                            return a.type.localeCompare(b.type)
+                          default:
+                            return new Date(b.resolvedAt || b.createdAt) - new Date(a.resolvedAt || a.createdAt)
+                        }
+                      })
+                      .map((emergency) => (
                       <div key={emergency._id} className="border rounded-lg p-6 bg-gray-50">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -935,6 +1212,7 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+              </>
             )}
           </div>
         </main>
