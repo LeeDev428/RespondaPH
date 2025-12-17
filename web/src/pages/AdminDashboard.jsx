@@ -206,6 +206,20 @@ const AdminDashboard = () => {
     }
   }
 
+  // Format date to Philippine time
+  const formatPhilippineTime = (dateString) => {
+    return new Date(dateString).toLocaleString('en-PH', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar user={user} onLogout={handleLogout} />
@@ -342,7 +356,17 @@ const AdminDashboard = () => {
                           e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           e.reportedBy?.name.toLowerCase().includes(searchQuery.toLowerCase())
                         )
-                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                        .sort((a, b) => {
+                          // Sort by most recent activity (latest update or creation time)
+                          const getLatestActivity = (emergency) => {
+                            if (emergency.updates && emergency.updates.length > 0) {
+                              const latestUpdate = emergency.updates[emergency.updates.length - 1]
+                              return new Date(latestUpdate.timestamp)
+                            }
+                            return new Date(emergency.createdAt)
+                          }
+                          return getLatestActivity(b) - getLatestActivity(a)
+                        })
                         .slice(0, 5)
                         .map((emergency) => (
                         <div key={emergency._id} className="border rounded-lg p-4 hover:shadow-md transition">
@@ -362,7 +386,10 @@ const AdminDashboard = () => {
                           </div>
                           <p className="text-gray-700 mb-2">{emergency.description}</p>
                           <p className="text-sm text-gray-500">📍 {emergency.location.address}</p>
-                          <p className="text-sm text-gray-500">⏰ {new Date(emergency.createdAt).toLocaleString()}</p>
+                          <p className="text-sm text-gray-500">⏰ Created: {formatPhilippineTime(emergency.createdAt)}</p>
+                          {emergency.updates && emergency.updates.length > 0 && (
+                            <p className="text-sm text-blue-600">🔄 Last Update: {formatPhilippineTime(emergency.updates[emergency.updates.length - 1].timestamp)}</p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -507,7 +534,11 @@ const AdminDashboard = () => {
 
                         <p className="text-gray-700 mb-3">{emergency.description}</p>
                         <p className="text-sm text-gray-600 mb-2">📍 Location: {emergency.location.address}</p>
-                        <p className="text-sm text-gray-600 mb-4">⏰ {new Date(emergency.createdAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-600">⏰ Created: {formatPhilippineTime(emergency.createdAt)}</p>
+                        {emergency.updates && emergency.updates.length > 0 && (
+                          <p className="text-sm text-blue-600 mb-2">🔄 Last Status Change: {formatPhilippineTime(emergency.updates[emergency.updates.length - 1].timestamp)} - <span className="font-semibold">{emergency.updates[emergency.updates.length - 1].status}</span></p>
+                        )}
+                        <div className="mb-4"></div>
 
                         {emergency.assignedResponders?.length > 0 && (
                           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
@@ -528,7 +559,7 @@ const AdminDashboard = () => {
                                     {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
                                   </p>
                                   <p className="text-xs text-green-600">
-                                    {new Date(update.timestamp).toLocaleString()}
+                                    {formatPhilippineTime(update.timestamp)}
                                   </p>
                                 </div>
                                 <p className="text-sm text-green-700 mb-1">Status: {update.status}</p>
@@ -817,7 +848,7 @@ const AdminDashboard = () => {
                           <p className="text-gray-700 mb-2">{announcement.message}</p>
                           <div className="flex justify-between items-center">
                             <p className="text-sm text-gray-500">
-                              Created: {new Date(announcement.createdAt).toLocaleString()}
+                              Created: {formatPhilippineTime(announcement.createdAt)}
                             </p>
                             <button
                               onClick={() => handleDeleteAnnouncement(announcement._id)}
@@ -864,9 +895,9 @@ const AdminDashboard = () => {
 
                         <p className="text-gray-700 mb-3">{emergency.description}</p>
                         <p className="text-sm text-gray-600 mb-2">📍 Location: {emergency.location.address}</p>
-                        <p className="text-sm text-gray-600 mb-2">⏰ Reported: {new Date(emergency.createdAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-600 mb-2">⏰ Reported: {formatPhilippineTime(emergency.createdAt)}</p>
                         {emergency.resolvedAt && (
-                          <p className="text-sm text-green-600 mb-4">✅ Resolved: {new Date(emergency.resolvedAt).toLocaleString()}</p>
+                          <p className="text-sm text-green-600 mb-4">✅ Resolved: {formatPhilippineTime(emergency.resolvedAt)}</p>
                         )}
 
                         {emergency.assignedResponders?.length > 0 && (
@@ -888,7 +919,7 @@ const AdminDashboard = () => {
                                     {update.updatedBy?.name || 'Responder'} ({update.updatedBy?.role || 'responder'})
                                   </p>
                                   <p className="text-xs text-green-600">
-                                    {new Date(update.timestamp).toLocaleString()}
+                                    {formatPhilippineTime(update.timestamp)}
                                   </p>
                                 </div>
                                 <p className="text-sm text-green-700 mb-1">Status: {update.status}</p>
