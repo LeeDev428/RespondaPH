@@ -19,6 +19,16 @@ import { API_ENDPOINTS } from '../config/api';
 import EmergencyDetailModal from '../components/EmergencyDetailModal';
 import AnnouncementDetailModal from '../components/AnnouncementDetailModal';
 
+// Emergency type descriptions
+const EMERGENCY_DESCRIPTIONS = {
+  fire: 'An emergency involving uncontrolled flames that can cause damage to property, injury, or loss of life.',
+  flood: 'A disaster where water overflows onto normally dry land, causing damage to homes, infrastructure, and the environment.',
+  medical: 'A situation where a person\'s health is at immediate risk and requires urgent medical attention.',
+  accident: 'An unexpected event that causes injury, damage, or harm, often occurring without intent.',
+  crime: 'An emergency involving illegal acts such as theft, assault, or violence that threaten public safety.',
+  other: 'An emergency situation that does not fall under the predefined categories but still requires immediate attention or response from authorities.'
+};
+
 const ResidentDashboardScreen = ({ onLogout }) => {
   const [user, setUser] = useState(null);
   const [activeView, setActiveView] = useState('home');
@@ -432,6 +442,15 @@ const ResidentDashboardScreen = ({ onLogout }) => {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {reportForm.type && (
+              <View style={styles.typeDescriptionContainer}>
+                <Text style={styles.typeDescriptionTitle}>ℹ️ What is {reportForm.type.charAt(0).toUpperCase() + reportForm.type.slice(1)}?</Text>
+                <Text style={styles.typeDescriptionText}>
+                  {EMERGENCY_DESCRIPTIONS[reportForm.type]}
+                </Text>
+              </View>
+            )}
 
             <Text style={styles.label}>Description *</Text>
             <TextInput
