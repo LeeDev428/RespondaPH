@@ -25,7 +25,7 @@ const Navbar = ({ user, onLogout }) => {
               </>
             ) : (
               <>
-                <Link
+                {/* <Link
                   to="/login"
                   className="hover:text-lgu-green-200 transition"
                 >
@@ -36,7 +36,7 @@ const Navbar = ({ user, onLogout }) => {
                   className="bg-white text-lgu-green-700 px-4 py-2 rounded-lg hover:bg-lgu-green-50 transition"
                 >
                   Register
-                </Link>
+                </Link> */}
               </>
             )}
           </div>
