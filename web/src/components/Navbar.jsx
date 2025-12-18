@@ -16,12 +16,12 @@ const Navbar = ({ user, onLogout }) => {
             {user ? (
               <>
                 <span className="text-sm">Hello, {user.name}</span>
-                <button
+                {/* <button
                   onClick={onLogout}
                   className="bg-white text-lgu-green-700 px-4 py-2 rounded-lg hover:bg-lgu-green-50 transition"
                 >
                   Logout
-                </button>
+                </button> */}
               </>
             ) : (
               <>
