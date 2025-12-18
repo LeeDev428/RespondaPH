@@ -57,7 +57,7 @@ const LandingPage = () => {
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center p-8 rounded-2xl bg-red-50 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <div className="text-5xl mb-6">🆘</div>
+                <div className="text-5xl mb-6">🚨</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   Emergency Reporting
                 </h3>
@@ -67,7 +67,7 @@ const LandingPage = () => {
               </div>
               
               <div className="text-center p-8 rounded-2xl bg-blue-50 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <div className="text-5xl mb-6">�</div>
+                <div className="text-5xl mb-6">🔔</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   Real-time Alerts
                 </h3>
@@ -77,7 +77,7 @@ const LandingPage = () => {
               </div>
               
               <div className="text-center p-8 rounded-2xl bg-yellow-50 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <div className="text-5xl mb-6">�</div>
+                <div className="text-5xl mb-6">📋</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   Track Reports
                 </h3>
