@@ -903,6 +903,25 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
   },
+  typeDescriptionContainer: {
+    backgroundColor: '#DBEAFE',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3B82F6',
+  },
+  typeDescriptionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E40AF',
+    marginBottom: 6,
+  },
+  typeDescriptionText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    lineHeight: 18,
+  },
   priorityContainer: {
     flexDirection: 'row',
     gap: 8,
